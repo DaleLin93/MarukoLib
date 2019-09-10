@@ -10,13 +10,9 @@ namespace MarukoLib.Lang
 
         private readonly Random _r;
 
-        private readonly double Target;
+        private readonly double _target, _nonTarget;
 
-        private readonly double NonTarget;
-
-        private double _targetCount;
-
-        private double _nonTargetCount;
+        private double _targetCount, _nonTargetCount;
 
         public PseudoRandom(double targetRate) : this(targetRate, (int)DateTimeUtils.CurrentTimeTicks) { }
 
@@ -26,13 +22,13 @@ namespace MarukoLib.Lang
             _r = new Random(seed);
             if (targetRate > 0.5)
             {
-                Target = 1 / (1 - targetRate) - 1;
-                NonTarget = 1;
+                _target = 1 / (1 - targetRate) - 1;
+                _nonTarget = 1;
             }
             else
             {
-                Target = 1;
-                NonTarget = 1 / targetRate - 1;
+                _target = 1;
+                _nonTarget = 1 / targetRate - 1;
             }
         }
 
@@ -46,16 +42,16 @@ namespace MarukoLib.Lang
                 return true;
             lock (_lock)
             {
-                var modifiedTargetRate = (Target - _targetCount) / (Target - _targetCount + NonTarget - _nonTargetCount);
-                bool target = _r.NextDouble() < modifiedTargetRate;
+                var modifiedTargetRate = (_target - _targetCount) / (_target - _targetCount + _nonTarget - _nonTargetCount);
+                var target = _r.NextDouble() < modifiedTargetRate;
                 if (target)
                     _targetCount++;
                 else
                     _nonTargetCount++;
-                if (_targetCount >= Target && _nonTargetCount >= NonTarget)
+                if (_targetCount >= _target && _nonTargetCount >= _nonTarget)
                 {
-                    _targetCount -= Target;
-                    _nonTargetCount -= NonTarget;
+                    _targetCount -= _target;
+                    _nonTargetCount -= _nonTarget;
                 }
                 return target;
             }

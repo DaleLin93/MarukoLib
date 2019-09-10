@@ -104,6 +104,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="PseudoRandomTests.cs" />
     <Compile Include="ClockTests.cs" />
     <Compile Include="TypeUtilsTests.cs" />
     <Compile Include="ContextTests.cs" />
