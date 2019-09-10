@@ -81,6 +81,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Numerics" />
     <Reference Include="System.Windows" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
@@ -143,8 +144,6 @@
     <Compile Include="Lang\ReferenceCounter.cs" />
     <Compile Include="Lang\TypeConverter.cs" />
     <Compile Include="Lang\ObjectWrapper.cs" />
-    <Compile Include="Math\Complex.cs" />
-    <Compile Include="Math\FastFourierTransform.cs" />
     <Compile Include="IO\EndiannessUtils.cs" />
     <Compile Include="Lang\NumberUtils.cs" />
     <Compile Include="UI\PointUtils.cs" />
