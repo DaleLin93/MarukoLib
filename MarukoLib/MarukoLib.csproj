@@ -157,6 +157,7 @@
     <Compile Include="Threading\AsyncRepeatingRunner.cs" />
     <Compile Include="Threading\ThreadUtils.cs" />
     <Compile Include="UI\DispatchingUtils.cs" />
+    <Compile Include="UI\ScreenInfo.cs" />
     <Compile Include="UI\UIExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
