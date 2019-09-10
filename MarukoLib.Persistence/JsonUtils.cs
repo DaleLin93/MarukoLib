@@ -35,7 +35,7 @@ namespace MarukoLib.Persistence
                     Logger.Error("TryDeserializeFromFile", e, "file", file);
                 }
             }
-            result = default;
+            result = default(T);
             return false;
         }
 
@@ -59,7 +59,7 @@ namespace MarukoLib.Persistence
                     Logger.Error("TryDeserializeFromFile", e, "file", file);
                 }
             }
-            result = default;
+            result = null;
             return false;
         }
 
