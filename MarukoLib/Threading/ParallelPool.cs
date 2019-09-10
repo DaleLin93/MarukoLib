@@ -8,14 +8,17 @@ using MarukoLib.Logging;
 namespace MarukoLib.Threading
 {
 
+    /// <summary>
+    /// Split a big task into N sub-tasks (N = parallel level).
+    /// </summary>
     public class ParallelPool
     {
 
         private static readonly Logger Logger = Logger.GetLogger(typeof(ParallelPool));
 
-        public delegate void Consumer<in T>(T input);
+        public delegate void TaskExecFunc<in T>(T input);
 
-        public sealed class Task
+        public sealed class TaskDescriptor
         {
 
             public readonly Guid Guid;
@@ -24,7 +27,7 @@ namespace MarukoLib.Threading
 
             public readonly uint TotalTask;
 
-            public Task(Guid guid, uint taskIndex, uint totalTask)
+            public TaskDescriptor(Guid guid, uint taskIndex, uint totalTask)
             {
                 Guid = guid;
                 TaskIndex = taskIndex;
@@ -34,6 +37,8 @@ namespace MarukoLib.Threading
             public override string ToString() => $"{nameof(Guid)}: {Guid}, {nameof(TaskIndex)}: {TaskIndex}, {nameof(TotalTask)}: {TotalTask}";
 
         }
+
+        public static readonly int RecommendedMaxParallelLevel = Environment.ProcessorCount;
 
         public readonly uint ParallelLevel;
 
@@ -45,19 +50,19 @@ namespace MarukoLib.Threading
             ParallelLevel = parallelLevel;
         }
 
-        public void Batch<T>(Consumer<T> consumer, params T[] @params) => Batch(@params.ToList(), consumer);
+        public void Batch<T>(TaskExecFunc<T> taskExecFunc, params T[] @params) => Batch(@params.ToList(), taskExecFunc);
 
-        public void Batch<T>(IList<T> @params, Consumer<T> consumer) => Batch((uint)@params.Count, task => consumer(@params[(int)task.TaskIndex]));
+        public void Batch<T>(IList<T> @params, TaskExecFunc<T> taskExecFunc) => Batch((uint)@params.Count, task => taskExecFunc(@params[(int)task.TaskIndex]));
 
-        public void Batch(Consumer<Task> consumer) => Batch(ParallelLevel, consumer);
+        public void Batch(TaskExecFunc<TaskDescriptor> taskExecFunc) => Batch(ParallelLevel, taskExecFunc);
 
-        public void Batch(uint taskNum, Consumer<Task> consumer)
+        public void Batch(uint taskNum, TaskExecFunc<TaskDescriptor> taskExecFunc)
         {
             var guid = Guid.NewGuid();
 
-            var tasks = new LinkedList<Task>();
+            var tasks = new LinkedList<TaskDescriptor>();
             for (var i = 0; i < taskNum; i++)
-                tasks.AddLast(new Task(guid, (uint)i, taskNum));
+                tasks.AddLast(new TaskDescriptor(guid, (uint)i, taskNum));
 
             var exceptions = new LinkedList<Exception>();
             lock (_lock)
@@ -71,17 +76,17 @@ namespace MarukoLib.Threading
                     {
                         while (true)
                         {
-                            Task task;
+                            TaskDescriptor taskDescriptor;
                             lock (tasks)
                             {
                                 if (tasks.IsEmpty()) return;
-                                task = tasks.First.Value;
+                                taskDescriptor = tasks.First.Value;
                                 tasks.RemoveFirst();
                             }
 
                             try
                             {
-                                consumer(task);
+                                taskExecFunc(taskDescriptor);
                             }
                             catch (Exception e)
                             {
