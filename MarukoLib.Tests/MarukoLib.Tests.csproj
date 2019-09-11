@@ -112,6 +112,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="InteropTests.cs" />
     <Compile Include="ParallelPoolTests.cs" />
     <Compile Include="PseudoRandomTests.cs" />
     <Compile Include="ClockTests.cs" />
