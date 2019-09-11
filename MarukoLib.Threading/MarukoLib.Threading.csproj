@@ -43,8 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AsyncRepeatingRunner.cs" />
-    <Compile Include="ExceptionEventArgs.cs" />
+    <Compile Include="AsyncCyclicExecutor.cs" />
     <Compile Include="ParallelPool.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ThreadUtils.cs" />

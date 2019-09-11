@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using MarukoLib.Lang.Concurrent;
+using MarukoLib.Lang.Events;
 using MarukoLib.Logging;
 
 namespace MarukoLib.Threading
@@ -29,10 +30,10 @@ namespace MarukoLib.Threading
     /// <summary>
     /// Run specific task repeatedly, asynchronously.
     /// </summary>
-    public class AsyncRepeatingRunner
+    public class AsyncCyclicExecutor
     {
 
-        private static readonly Logger Logger = Logger.GetLogger(typeof(AsyncRepeatingRunner));
+        private static readonly Logger Logger = Logger.GetLogger(typeof(AsyncCyclicExecutor));
 
         internal static uint InstanceId = 0;
 
@@ -62,11 +63,11 @@ namespace MarukoLib.Threading
 
         private Thread _thread;
 
-        public AsyncRepeatingRunner(Action task, bool stopOnUnhandledException = false, ThreadPriority priority = ThreadPriority.Normal, 
+        public AsyncCyclicExecutor(Action task, bool stopOnUnhandledException = false, ThreadPriority priority = ThreadPriority.Normal, 
             ApartmentState? apartmentState = null, StoppingAction stoppingAction = StoppingAction.None)
-            : this($"{nameof(AsyncRepeatingRunner) } #{InstanceId++}", task, stopOnUnhandledException, priority, apartmentState, stoppingAction) { }
+            : this($"{nameof(AsyncCyclicExecutor) } #{InstanceId++}", task, stopOnUnhandledException, priority, apartmentState, stoppingAction) { }
 
-        public AsyncRepeatingRunner(string name, Action task, bool stopOnUnhandledException = false, ThreadPriority priority = ThreadPriority.Normal, 
+        public AsyncCyclicExecutor(string name, Action task, bool stopOnUnhandledException = false, ThreadPriority priority = ThreadPriority.Normal, 
             ApartmentState? apartmentState = null, StoppingAction stoppingAction = StoppingAction.None)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));

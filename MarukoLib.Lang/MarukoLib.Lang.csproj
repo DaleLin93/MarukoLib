@@ -61,6 +61,7 @@
     <Compile Include="Disposables.cs" />
     <Compile Include="EnumerableUtils.cs" />
     <Compile Include="EnumUtils.cs" />
+    <Compile Include="Events\ExceptionEventArgs.cs" />
     <Compile Include="Exceptions\ProgrammingException.cs" />
     <Compile Include="Exceptions\StateException.cs" />
     <Compile Include="Exceptions\UserException.cs" />

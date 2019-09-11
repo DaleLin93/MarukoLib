@@ -1,5 +1,4 @@
-﻿
-namespace MarukoLib.Threading
+﻿namespace MarukoLib.Lang.Events
 {
 
     public class ExceptionEventArgs : System.EventArgs
