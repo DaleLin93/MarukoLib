@@ -38,7 +38,7 @@ namespace MarukoLib.Threading
 
         }
 
-        public static readonly int RecommendedMaxParallelLevel = Environment.ProcessorCount;
+        public static readonly uint RecommendedMaxParallelLevel = (uint) Environment.ProcessorCount;
 
         public readonly uint ParallelLevel;
 
