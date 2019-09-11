@@ -6,6 +6,8 @@ namespace MarukoLib.UI
     public static class ColorUtils
     {
 
+        public static SWM.Color SetAlpha(this SWM.Color color, byte alpha) => new SWM.Color { A = alpha, R = color.R, G = color.G, B = color.B };
+
         public static SD.Color ToSdColor(this uint color) => SD.Color.FromArgb((byte) (color >> 24 & 0xFF), (byte) (color >> 16 & 0xFF), (byte) (color >> 8 & 0xFF), (byte) (color & 0xFF));
 
         public static uint ToUIntArgb(this SD.Color color) => ((uint) color.A << 24) | ((uint) color.R << 16) | ((uint) color.G << 8) | color.B;
