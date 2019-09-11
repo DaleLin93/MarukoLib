@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
@@ -119,14 +118,11 @@ namespace MarukoLib.Lang
 
         }
 
-        private const string PropertyQuery = "Query";
-
         public static readonly ITypeConverter<ArrayQuery, string> TypeConverter = TypeConverterExt.OfNull2Null<ArrayQuery, string>(q => q.Query, s => new ArrayQuery(s));
 
         private readonly IReadOnlyCollection<IExpression> _expressions;
 
-        [JsonConstructor]
-        public ArrayQuery([JsonProperty(PropertyQuery)] string query)
+        public ArrayQuery(string query)
         {
             Query = query ?? throw new ArgumentNullException(nameof(query));
             _expressions = Parse(query);
@@ -185,7 +181,6 @@ namespace MarukoLib.Lang
             }
         }
 
-        [JsonProperty(PropertyQuery)]
         public string Query { get; }
 
         public IReadOnlyCollection<double> Enumerate(double lowerbound, double upperbound) => Enumerate(new Pair<double>(lowerbound, upperbound), true);
@@ -221,15 +216,11 @@ namespace MarukoLib.Lang
     public sealed class ArrayQuery<T> 
     {
 
-        private const string PropertyQuery = "Query";
-
-        [JsonIgnore]
         public readonly ArrayQuery BaseQuery;
 
         public readonly ITypeConverter<double, T> Converter;
 
-        [JsonConstructor]
-        public ArrayQuery([JsonProperty(PropertyQuery)] string query, ITypeConverter<double, T> typeConverter)
+        public ArrayQuery(string query, ITypeConverter<double, T> typeConverter)
         {
             BaseQuery = new ArrayQuery(query ?? throw new ArgumentNullException(nameof(query)));
             Converter = typeConverter;
@@ -238,7 +229,6 @@ namespace MarukoLib.Lang
         public static ITypeConverter<ArrayQuery<T>, string> CreateTypeConverter(ITypeConverter<double, T> numberConverter) => 
             TypeConverterExt.OfNull2Null<ArrayQuery<T>, string>(q => q.Query, s => new ArrayQuery<T>(s, numberConverter));
 
-        [JsonProperty(PropertyQuery)]
         public string Query => BaseQuery.Query;
 
         public IReadOnlyCollection<T> Enumerate(T lowerbound, T upperbound) => BaseQuery.Enumerate(lowerbound, upperbound, Converter);

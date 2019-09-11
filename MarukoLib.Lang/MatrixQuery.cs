@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Linq;
 using JetBrains.Annotations;
 
@@ -71,14 +70,11 @@ namespace MarukoLib.Lang
 
         }
 
-        private const string PropertyQuery = "Query";
-
         public static readonly ITypeConverter<MatrixQuery, string> TypeConverter = TypeConverterExt.OfNull2Null<MatrixQuery, string>(q => q.Query, s => new MatrixQuery(s));
 
         private readonly IExpression _expression;
 
-        [JsonConstructor]
-        public MatrixQuery([JsonProperty(PropertyQuery)] string query)
+        public MatrixQuery(string query)
         {
             Query = query ?? throw new ArgumentNullException(nameof(query));
             _expression = Parse(query);
@@ -108,7 +104,6 @@ namespace MarukoLib.Lang
             return new VectorExpression(new ArrayQuery(expression), rowVec);
         }
 
-        [JsonProperty(PropertyQuery)]
         public string Query { get; }
 
         public double[,] GetMatrix(double lowerbound, double upperbound) => GetMatrix(new Pair<double>(lowerbound, upperbound), true);
@@ -141,15 +136,11 @@ namespace MarukoLib.Lang
     public sealed class MatrixQuery<T> 
     {
 
-        private const string PropertyQuery = "Query";
-
-        [JsonIgnore]
         public readonly MatrixQuery BaseQuery;
 
         public readonly ITypeConverter<double, T> Converter;
 
-        [JsonConstructor]
-        public MatrixQuery([JsonProperty(PropertyQuery)] string query, ITypeConverter<double, T> typeConverter)
+        public MatrixQuery(string query, ITypeConverter<double, T> typeConverter)
         {
             BaseQuery = new MatrixQuery(query ?? throw new ArgumentNullException(nameof(query)));
             Converter = typeConverter;
@@ -158,7 +149,6 @@ namespace MarukoLib.Lang
         public static ITypeConverter<MatrixQuery<T>, string> CreateTypeConverter(ITypeConverter<double, T> numberConverter) =>
             TypeConverterExt.OfNull2Null<MatrixQuery<T>, string>(q => q.Query, s => new MatrixQuery<T>(s, numberConverter));
 
-        [JsonProperty(PropertyQuery)]
         public string Query => BaseQuery.Query;
 
         public T[,] GetMatrix(T lowerbound, T upperbound) => BaseQuery.GetMatrix(lowerbound, upperbound, Converter);

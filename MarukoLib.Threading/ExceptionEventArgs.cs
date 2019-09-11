@@ -5,10 +5,7 @@ namespace MarukoLib.Threading
     public class ExceptionEventArgs : System.EventArgs
     {
 
-        public ExceptionEventArgs(object exception)
-        {
-            ExceptionObject = exception;
-        }
+        public ExceptionEventArgs(object exception) => ExceptionObject = exception;
 
         public object ExceptionObject { get; }
 

@@ -96,65 +96,19 @@
     <Compile Include="Image\BitmapUtils.cs" />
     <Compile Include="IO\ByteArrayStream.cs" />
     <Compile Include="IO\PathInfo.cs" />
-    <Compile Include="Lang\ActionUtils.cs" />
-    <Compile Include="Lang\Collections\CollectingObserver.cs" />
-    <Compile Include="Lang\Concurrent\FrequencyBarrier.cs" />
-    <Compile Include="Lang\Container.cs" />
-    <Compile Include="Lang\Registry.cs" />
-    <Compile Include="Lang\MatrixUtils.cs" />
-    <Compile Include="Lang\MatrixQuery.cs" />
-    <Compile Include="Lang\ArrayQuery.cs" />
-    <Compile Include="Lang\DictionaryUtils.cs" />
     <Compile Include="UI\CursorUtils.cs" />
     <Compile Include="Crypt\Base64Utils.cs" />
-    <Compile Include="Lang\Collections\CircularFifoBuffer.cs" />
     <Compile Include="UI\ColorUtils.cs" />
     <Compile Include="IO\CompressUtils.cs" />
     <Compile Include="Net\CookieUtils.cs" />
-    <Compile Include="Lang\DateTimeUtils.cs" />
-    <Compile Include="Lang\CollectionUtils.cs" />
-    <Compile Include="Lang\Concurrent\Atomics.cs" />
-    <Compile Include="Lang\Clock.cs" />
-    <Compile Include="Lang\Describable.cs" />
-    <Compile Include="Lang\Disposable.cs" />
-    <Compile Include="Lang\Pair.cs" />
-    <Compile Include="Lang\Predicates.cs" />
-    <Compile Include="Lang\Timestamped.cs" />
-    <Compile Include="Lang\Delegates.cs" />
-    <Compile Include="Lang\Concurrent\CountDownLatch.cs" />
-    <Compile Include="Threading\ParallelPool.cs" />
-    <Compile Include="Lang\TraversalUtils.cs" />
-    <Compile Include="Lang\TypeUtils.cs" />
-    <Compile Include="Threading\ExceptionEventArgs.cs" />
-    <Compile Include="Lang\Exceptions\ProgrammingException.cs" />
-    <Compile Include="Lang\Context.cs" />
-    <Compile Include="Lang\Disposables.cs" />
-    <Compile Include="Lang\Sequence.cs" />
-    <Compile Include="Lang\ToStringOverridenWrapper.cs" />
-    <Compile Include="Lang\Functions.cs" />
-    <Compile Include="Lang\ArrayUtils.cs" />
-    <Compile Include="Lang\EnumUtils.cs" />
-    <Compile Include="Lang\EnumerableUtils.cs" />
-    <Compile Include="Lang\Exceptions\StateException.cs" />
-    <Compile Include="Lang\Exceptions\UserException.cs" />
     <Compile Include="IO\FileUtils.cs" />
     <Compile Include="UI\GraphicsUtils.cs" />
     <Compile Include="UI\ImageUtils.cs" />
-    <Compile Include="Lang\PseudoRandom.cs" />
-    <Compile Include="Lang\ReferenceCounter.cs" />
-    <Compile Include="Lang\TypeConverter.cs" />
-    <Compile Include="Lang\ObjectWrapper.cs" />
     <Compile Include="IO\EndiannessUtils.cs" />
-    <Compile Include="Lang\NumberUtils.cs" />
     <Compile Include="UI\PointUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Lang\ReflectUtils.cs" />
-    <Compile Include="Lang\ProcessUtils.cs" />
     <Compile Include="IO\SerialPortUtils.cs" />
     <Compile Include="IO\StreamUtils.cs" />
-    <Compile Include="Lang\StringUtils.cs" />
-    <Compile Include="Threading\AsyncRepeatingRunner.cs" />
-    <Compile Include="Threading\ThreadUtils.cs" />
     <Compile Include="UI\DispatchingUtils.cs" />
     <Compile Include="UI\ScreenInfo.cs" />
     <Compile Include="UI\UIExtensions.cs" />
@@ -171,6 +125,10 @@
     <ProjectReference Include="..\MarukoLib.Interop\MarukoLib.Interop.csproj">
       <Project>{1f8d87bf-b42d-4735-be0a-890cc5df927b}</Project>
       <Name>MarukoLib.Interop</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MarukoLib.Lang\MarukoLib.Lang.csproj">
+      <Project>{cdc6516e-2114-4e81-8ba0-9d3e93f8da15}</Project>
+      <Name>MarukoLib.Lang</Name>
     </ProjectReference>
     <ProjectReference Include="..\MarukoLib.Logging\MarukoLib.Logging.csproj">
       <Project>{36b35a27-9e3c-4a7b-870b-9df3b1fe534b}</Project>
