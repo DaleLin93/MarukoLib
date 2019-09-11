@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Text;
 using MarukoLib.Logging;
-using MarukoLib.Threading;
 
 namespace MarukoLib.Crypt
 {
     public static class Base64Utils
     {
 
-        private static readonly Logger Logger = Logger.GetLogger(typeof(ThreadUtils));
+        private static readonly Logger Logger = Logger.GetLogger(typeof(Base64Utils));
 
         /// <summary>
         /// Base64加密
