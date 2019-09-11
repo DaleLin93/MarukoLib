@@ -21,6 +21,9 @@ namespace MarukoLib.Dragonfly
 
     }
 
+    /// <summary>
+    /// Non-blocking communication based on dragonfly.
+    /// </summary>
     public class DragonflyAgent
     {
 
@@ -87,6 +90,8 @@ namespace MarukoLib.Dragonfly
 
         }
 
+        public const string DragonflyAssemblyName = "Dragonfly.NET";
+
         public event EventHandler Connected;
 
         public event EventHandler Disconnected;
@@ -112,23 +117,24 @@ namespace MarukoLib.Dragonfly
         }
 
         /// <summary>
-        /// Add useLegacyV2RuntimeActivationPolicy="true" attribute for startup node to use the library.
+        /// Please add <code>useLegacyV2RuntimeActivationPolicy="true"</code> attribute for 'startup' node in 'App.config' to use the library.
         /// </summary>
-        public static void UsingBuiltinLibrary()
-        {
+        public static void UsingBuiltinLibrary() =>
             AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
             {
-                if (!Equals(new AssemblyName(args.Name).Name, "Dragonfly.NET")) return null;
-                var file = Path.GetTempFileName();
-                using (var stream = new FileStream(file, FileMode.Create))
-                {
-                    var bytes = Properties.Resources.Dragonfly_NET;
-                    stream.Write(bytes, 0, bytes.Length);
-                    stream.Flush();
-                }
+                if (!Equals(new AssemblyName(args.Name).Name, DragonflyAssemblyName)) return null;
+                var file = Path.GetTempFileName() + ".dll";
+                /**
+                 * NOTICE: Must save to file first, the following link is the explanation you may want:  
+                 * https://stackoverflow.com/questions/2945080/how-do-i-dynamically-load-raw-assemblies-that-contains-unmanaged-codebypassing
+                 */
+                File.WriteAllBytes(file, Properties.Resources.Dragonfly_NET);
+                /**
+                 * NOTICE: Do not delete file here, otherwise 'access denied error' will occurred.
+                 */
+                AppDomain.CurrentDomain.ProcessExit += (s0, e0) => File.Delete(file);
                 return Assembly.LoadFile(file);
             };
-        }
 
         public void AddMessageHandler(IMessageHandler handler)
         {
@@ -155,15 +161,14 @@ namespace MarukoLib.Dragonfly
 
         public void RemoveMessageHandler(IMessageHandler handler)
         {
-            if (handler == null)
-                throw new ArgumentNullException(nameof(handler));
+            if (handler == null) throw new ArgumentNullException(nameof(handler));
             lock (_registrationLock)
                 foreach (var messageType in handler.SupportedMessageTypes)
                     if (_handlers.ContainsKey(messageType))
                     {
                         var collection = _handlers[messageType];
                         if (collection.Remove(handler) && collection.Count <= 0)
-                        {
+                        { /* Remove empty entry. */
                             _handlers.Remove(messageType);
                             lock (_moduleOperationLock)
                                 if (_module.IsConnected)
@@ -188,7 +193,7 @@ namespace MarukoLib.Dragonfly
                     foreach (var type in _handlers.Keys)
                         _module.Subscribe(type);
                 }
-            (_thread = new Thread(AcquiringLoop)
+            (_thread = new Thread(AcquiringWorker)
             {
                 IsBackground = true,
                 Priority = ThreadPriority.AboveNormal
@@ -198,8 +203,7 @@ namespace MarukoLib.Dragonfly
 
         public void Disconnect()
         {
-            if (_thread.IsAlive)
-                _thread.Interrupt();
+            if (_thread.IsAlive) _thread.Interrupt();
             _thread = null;
             lock (_moduleOperationLock)
                 if (_module.IsConnected)
@@ -231,7 +235,7 @@ namespace MarukoLib.Dragonfly
             return true;
         }
 
-        private void AcquiringLoop()
+        private void AcquiringWorker()
         {
             var currentThread = Thread.CurrentThread;
             while (_thread == currentThread)
@@ -239,10 +243,8 @@ namespace MarukoLib.Dragonfly
                 try
                 {
                     global::Dragonfly.Message rawMessage;
-                    lock (_moduleOperationLock)
-                        rawMessage = _module.ReadMessage(0.5);
-                    if (rawMessage == null || rawMessage.msg_type == -1)
-                        continue;
+                    lock (_moduleOperationLock) rawMessage = _module.ReadMessage(0.5);
+                    if (rawMessage == null || rawMessage.msg_type == -1) continue;
                     var messageType = rawMessage.msg_type;
                     var message = new Message(rawMessage);
                     lock (_registrationLock)
@@ -250,17 +252,20 @@ namespace MarukoLib.Dragonfly
                             foreach (var handler in _handlers[messageType])
                                 handler.Handle(message);
                         else
-                            Console.WriteLine($"Message type without handler: #{rawMessage.msg_type}");
+                            goto UnhandledMessageType;
+                    continue;
+                    UnhandledMessageType:
+                    Logger.Warn("AcquiringWorker - unhandled message type", "moduleId", _moduleId, "messageType", rawMessage.msg_type);
                 }
                 catch (ThreadInterruptedException) { break; }
                 catch (Exception e)
                 {
-                    Logger.Warn("AcquiringLoop - connection lost", e, "moduleId", _moduleId, "address", _address);
+                    Logger.Warn("AcquiringWorker - connection lost", e, "moduleId", _moduleId, "address", _address);
                     lock (_moduleOperationLock)
                         _module.DisconnectFromMMM();
                     Disconnected?.Invoke(this, EventArgs.Empty);
                     if (!Reconnect(60, 2000))
-                        Logger.Warn("AcquiringLoop - failed to reconnect", e, "moduleId", _moduleId, "address", _address);
+                        Logger.Warn("AcquiringWorker - failed to reconnect", e, "moduleId", _moduleId, "address", _address);
                     return;
                 }
             }
