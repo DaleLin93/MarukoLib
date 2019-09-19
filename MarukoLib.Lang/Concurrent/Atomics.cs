@@ -1,26 +1,121 @@
-﻿using System.Threading;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 
 namespace MarukoLib.Lang.Concurrent
 {
 
-    public sealed class AtomicBool
+    public interface IAtomic<T>
     {
 
-        private int _val;
-
-        public AtomicBool(bool val) => _val = val ? 1 : 0;
-
         /// <summary>
-        /// Currently stored value.
+        /// Get value.
         /// </summary>
-        public bool Value => Interlocked.CompareExchange(ref _val, 0, 0) == 1;
+        /// <returns>Stored value</returns>
+        T Get();
 
         /// <summary>
         /// Set value.
         /// </summary>
         /// <param name="value">New value</param>
-        /// <returns>Old value</returns>
-        public bool Set(bool value) => Interlocked.Exchange(ref _val, value ? 1 : 0) == 1;
+        /// <returns>Old stored value</returns>
+        T Set(T value);
+
+        /// <summary>
+        /// Set only if the <paramref name="oldValue"/> is equals to stored value.
+        /// </summary>
+        /// <param name="oldValue">Old value to compare</param>
+        /// <param name="newValue">New value to set</param>
+        /// <returns>Successfully set</returns>
+        bool CompareAndSet(T oldValue, T newValue);
+
+        /// <summary>
+        /// Compute and set computed value.
+        /// </summary>
+        /// <param name="operator">Operator to compute new value.</param>
+        /// <param name="oldValue">Stored value.</param>
+        /// <param name="newValue">Computed value.</param>
+        void Compute(UnaryOperator<T> @operator, out T oldValue, out T newValue);
+
+    }
+
+    public abstract class AbstractAtomic<T> : IAtomic<T>
+    {
+
+        protected const bool UseSpinning = true;
+
+        protected const int PreBlockSpinningCount = 15;
+
+        private static readonly bool RefType = typeof(T).IsByRef;
+
+        private readonly object _lock = new object();
+        
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public abstract T Get();
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public abstract T Set(T value);
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public abstract bool CompareAndSet(T oldValue, T newValue);
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// Locking: optimistic locking (CAS, spinning count: <see cref="PreBlockSpinningCount"/>) -> pessimistic locking.
+        /// </summary>
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse")]
+        public virtual void Compute(UnaryOperator<T> @operator, out T oldValue, out T newValue)
+        {
+            if (UseSpinning)
+            {
+                for (var i = 0; i < PreBlockSpinningCount; i++)
+                {
+                    newValue = @operator(oldValue = Get());
+                    if (RefType ? ReferenceEquals(oldValue, newValue) : Equals(oldValue, newValue)) return;
+                    if (CompareAndSet(oldValue, newValue)) return;
+                }
+            }
+            lock (_lock) Set(newValue = @operator(oldValue = Get()));
+        }
+
+    }
+
+    public sealed class AtomicBool : AbstractAtomic<bool>
+    {
+
+        private int _val;
+
+        public AtomicBool(bool val = default) => _val = val ? 1 : 0;
+
+        /// <summary>
+        /// Get or set value.
+        /// </summary>
+        public bool Value
+        {
+            get => Get();
+            set => Set(value);
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override bool Get() => Interlocked.CompareExchange(ref _val, 0, 0) == 1;
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override bool Set(bool value) => Interlocked.Exchange(ref _val, value ? 1 : 0) == 1;
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override bool CompareAndSet(bool oldValue, bool newValue) => 
+            Interlocked.CompareExchange(ref _val, newValue ? 1 : 0, oldValue ? 1 : 0) == (oldValue ? 1 : 0);
 
         /// <summary>
         /// Set value to 'true', and returns true if the value was changed.
@@ -36,50 +131,103 @@ namespace MarukoLib.Lang.Concurrent
 
     }
 
-    public sealed class AtomicInt
+    public sealed class AtomicInt : AbstractAtomic<int>
     {
 
         private int _val;
 
-        public AtomicInt(int val) => Interlocked.Exchange(ref _val, val);
+        public AtomicInt(int val= default) => Interlocked.Exchange(ref _val, val);
 
         /// <summary>
-        /// Currently stored value.
+        /// Get or set value.
         /// </summary>
-        public int Value => Interlocked.CompareExchange(ref _val, 0, 0);
+        public int Value
+        {
+            get => Get();
+            set => Set(value);
+        }
 
         /// <summary>
-        /// Set value.
+        /// <inheritdoc cref="IAtomic{T}"/>
         /// </summary>
-        /// <param name="value">New value</param>
-        /// <returns>Old value</returns>
-        public int Set(int value) => Interlocked.Exchange(ref _val, value);
+        public override int Get() => Interlocked.CompareExchange(ref _val, 0, 0);
 
         /// <summary>
-        /// Set if the old value is matched.
+        /// <inheritdoc cref="IAtomic{T}"/>
         /// </summary>
-        /// <param name="oldValue">Old value to compare</param>
-        /// <param name="newValue">New value to set</param>
-        /// <returns>Successfully set</returns>
-        public bool SetIf(int oldValue, int newValue) => Interlocked.CompareExchange(ref _val, newValue, oldValue) == oldValue;
+        public override int Set(int value) => Interlocked.Exchange(ref _val, value);
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override bool CompareAndSet(int oldValue, int newValue) => Interlocked.CompareExchange(ref _val, newValue, oldValue) == oldValue;
+
+        public void Increment(int delta, out int oldValue, out int newValue) => Compute(v => v + delta, out oldValue, out newValue);
+
+        public void Decrement(int delta, out int oldValue, out int newValue) => Compute(v => v - delta, out oldValue, out newValue);
+
+        public int IncrementAndGet(int delta = 1)
+        {
+            Increment(delta, out _, out var val);
+            return val;
+        } 
+
+        public int GetAndIncrement(int delta = 1)
+        {
+            Increment(delta, out var val, out _);
+            return val;
+        }
+
+        public int DecrementAndGet(int delta = 1)
+        {
+            Decrement(delta, out _, out var val);
+            return val;
+        }
+
+        public int GetAndDecrement(int delta = 1)
+        {
+            Decrement(delta, out var val, out _);
+            return val;
+        }
 
     }
 
-    public sealed class Atomic<T> where T : class
+    public sealed class Atomic<T> : AbstractAtomic<T> where T : class
     {
 
-        private T _val;
+        private T _ref;
 
-        public Atomic(T val = default) => _val = val;
-
-        public T Get() => Interlocked.CompareExchange(ref _val, default, default);
+        public Atomic(T @ref = null) => _ref = @ref;
 
         /// <summary>
-        /// 
+        /// Get or set reference.
         /// </summary>
-        /// <param name="value"></param>
-        /// <returns>Old value</returns>
-        public T Set(T value) => Interlocked.Exchange(ref _val, value);
+        public T Reference
+        {
+            get => Get();
+            set => Set(value);
+        }
+
+        /// <summary>
+        /// Get reference.
+        /// </summary>
+        /// <returns>Stored reference</returns>
+        public override T Get() => Interlocked.CompareExchange(ref _ref, null, null);
+
+        /// <summary>
+        /// Set reference.
+        /// </summary>
+        /// <param name="ref">New reference</param>
+        /// <returns>Old stored reference</returns>
+        public override T Set(T @ref) => Interlocked.Exchange(ref _ref, @ref);
+
+        /// <summary>
+        /// Set only if the <paramref name="oldRef"/> is equals to stored reference.
+        /// </summary>
+        /// <param name="oldRef">Old reference to compare</param>
+        /// <param name="newRef">New reference to set</param>
+        /// <returns>Successfully set</returns>
+        public override bool CompareAndSet(T oldRef, T newRef) => ReferenceEquals(Interlocked.CompareExchange(ref _ref, newRef, oldRef), oldRef);
 
     }
 

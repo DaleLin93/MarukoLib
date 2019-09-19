@@ -28,7 +28,7 @@ namespace MarukoLib.Lang
 
             public bool Grab()
             {
-                if (_state.SetIf(InitialState, GrabbedState))
+                if (_state.CompareAndSet(InitialState, GrabbedState))
                 {
                     _grabAction();
                     return true;
@@ -38,7 +38,7 @@ namespace MarukoLib.Lang
 
             public bool Release(bool destroy = false)
             {
-                if (destroy ? _state.Set(ReleasedState) == GrabbedState : _state.SetIf(GrabbedState, ReleasedState))
+                if (destroy ? _state.Set(ReleasedState) == GrabbedState : _state.CompareAndSet(GrabbedState, ReleasedState))
                 {
                     _releaseAction();
                     return true;
