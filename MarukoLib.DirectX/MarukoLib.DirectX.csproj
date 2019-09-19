@@ -76,9 +76,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Direct2DComponent.cs" />
-    <Compile Include="DirectX.cs" />
+    <Compile Include="Direct2D.cs" />
     <Compile Include="DirectXComponent.cs" />
-    <Compile Include="RenderForm.cs">
+    <Compile Include="Direct2DForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />

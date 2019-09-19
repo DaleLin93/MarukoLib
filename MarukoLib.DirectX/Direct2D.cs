@@ -7,7 +7,7 @@ using Utilities = SharpDX.Utilities;
 namespace MarukoLib.DirectX
 {
 
-    public static class DirectX
+    public static class Direct2D
     {
 
         private static D2D.Factory _d2dFactory;

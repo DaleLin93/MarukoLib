@@ -228,7 +228,7 @@ namespace MarukoLib.DirectX
             if (staging == null) return;
 
             var fs = new FileStream(fileName, FileMode.Create);
-            var encoder = new WIC.BitmapEncoder(DirectX.ImageFactory, guidContainerFormat);
+            var encoder = new WIC.BitmapEncoder(Direct2D.ImageFactory, guidContainerFormat);
             encoder.Initialize(fs);
 
             var frameEncode = new WIC.BitmapFrameEncode(encoder);
@@ -315,9 +315,9 @@ namespace MarukoLib.DirectX
             var db = context.MapSubresource(staging, 0, MapMode.Read, MapFlags.None, out _);
 
             if (pfGuid != targetGuid) {
-                var formatConverter = new WIC.FormatConverter(DirectX.ImageFactory);
+                var formatConverter = new WIC.FormatConverter(Direct2D.ImageFactory);
                 if (formatConverter.CanConvert(pfGuid, targetGuid)) {
-                    var src = new WIC.Bitmap(DirectX.ImageFactory, desc.Width, desc.Height, pfGuid,
+                    var src = new WIC.Bitmap(Direct2D.ImageFactory, desc.Width, desc.Height, pfGuid,
                         new DataRectangle(db.DataPointer, db.RowPitch));
                     formatConverter.Initialize(src, targetGuid, WIC.BitmapDitherType.None, null, 0, WIC.BitmapPaletteType.Custom);
                     frameEncode.WriteSource(formatConverter, new Rectangle(0, 0, desc.Width, desc.Height));
@@ -402,7 +402,7 @@ namespace MarukoLib.DirectX
 
             // Create file
             var fs = new FileStream(fileName, FileMode.Create);
-            var encoder = new WIC.BitmapEncoder(DirectX.ImageFactory, guidContainerFormat);
+            var encoder = new WIC.BitmapEncoder(Direct2D.ImageFactory, guidContainerFormat);
             encoder.Initialize(fs);
 
 
@@ -441,10 +441,10 @@ namespace MarukoLib.DirectX
             var db = context.MapSubresource(staging, 0, MapMode.Read, MapFlags.None, out _);
 
             if (pfGuid != targetGuid) {
-                var formatConverter = new WIC.FormatConverter(DirectX.ImageFactory);
+                var formatConverter = new WIC.FormatConverter(Direct2D.ImageFactory);
 
                 if (formatConverter.CanConvert(pfGuid, targetGuid)) {
-                    var src = new WIC.Bitmap(DirectX.ImageFactory, desc.Width, desc.Height, pfGuid,
+                    var src = new WIC.Bitmap(Direct2D.ImageFactory, desc.Width, desc.Height, pfGuid,
                         new DataRectangle(db.DataPointer, db.RowPitch));
                     formatConverter.Initialize(src, targetGuid, WIC.BitmapDitherType.None, null, 0, WIC.BitmapPaletteType.Custom);
                     frameEncode.WriteSource(formatConverter, new Rectangle(0, 0, desc.Width, desc.Height));

@@ -11,12 +11,12 @@ using D3D11 = SharpDX.Direct3D11;
 namespace MarukoLib.DirectX
 {
 
-    public abstract class RenderForm : SharpDX.Windows.RenderForm, IDisposable
+    public abstract class Direct2DForm : RenderForm, IDisposable
     {
 
         protected readonly object RenderContextLock = new object();
 
-        protected RenderForm()
+        protected Direct2DForm()
         {
             Load += Window_OnLoaded;
             Resize += Window_OnResize;
