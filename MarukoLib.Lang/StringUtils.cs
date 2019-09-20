@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace MarukoLib.Lang
@@ -40,14 +41,7 @@ namespace MarukoLib.Lang
                 var indexOf = self.IndexOf(firstChar, startIndex);
                 if (indexOf == -1) return -1;
                 if (self.Length - indexOf < value.Length) return -1;
-                var flag = true;
-                for (var i = 0; i < value.Length; i++)
-                    if (self[indexOf + i] != value[i])
-                    {
-                        flag = false;
-                        break;
-                    }
-                if (flag) return indexOf;
+                if (!value.Where((t, i) => self[indexOf + i] != t).Any()) return indexOf;
             }
         }
 
@@ -66,56 +60,46 @@ namespace MarukoLib.Lang
                 startIndex += start.Length;
                 length -= start.Length;
             }
-            if (end != null && !end.IsEmpty() && str.EndsWith(end, comparison))
+            if (end != null && !end.IsEmpty() && str.EndsWith(end, comparison)) 
                 length -= end.Length;
             if (length == str.Length)
             {
                 result = str;
                 return false;
             }
-            else
-            {
-                result = str.Substring(startIndex, length);
-                return true;
-            }
+            result = str.Substring(startIndex, length);
+            return true;
         }
 
-        public static string Trim(this string str, string start, string end, StringComparison comparison = StringComparison.Ordinal)
-        {
-            TryTrim(str, start, end, out var result, comparison);
-            return result;
-        }
+        public static string Trim(this string str, string start, string end, StringComparison comparison = StringComparison.Ordinal) => 
+            TryTrim(str, start, end, out var result, comparison) ? str : result;
 
-        public static string TrimStart(this string str, string trim, StringComparison comparison = StringComparison.Ordinal)
-        {
-            if (trim == null || trim.IsEmpty() || !str.StartsWith(trim, comparison)) return str;
-            return str.Substring(trim.Length);
-        }
+        public static string TrimStart(this string str, string trim, StringComparison comparison = StringComparison.Ordinal) => 
+            trim == null || trim.IsEmpty() || !str.StartsWith(trim, comparison) ? str : str.Substring(trim.Length);
 
-        public static string TrimEnd(this string str, string trim, StringComparison comparison = StringComparison.Ordinal)
-        {
-            if (trim == null || trim.IsEmpty() || !str.EndsWith(trim, comparison)) return str;
-            return str.Substring(0, str.Length - trim.Length);
-        }
+        public static string TrimEnd(this string str, string trim, StringComparison comparison = StringComparison.Ordinal) => 
+            trim == null || trim.IsEmpty() || !str.EndsWith(trim, comparison) ? str:str.Substring(0, str.Length - trim.Length);
 
         public static string[] GetLines(this string str) => Regex.Split(str, "\r\n|\r|\n");
 
         public static string GetFirstLine(this string str)
         {
             var index = str.IndexOf("\r\n", StringComparison.Ordinal);
-            if (index == -1)
-                index = str.IndexOf('\n');
+            if (index == -1) index = str.IndexOf('\n');
             return index == -1 ? str : str.Substring(0, index);
         }
 
         public static string Replace(this string str, IEnumerable<KeyValuePair<string, string>> replaces) =>
             replaces.Aggregate(str, (current, pair) => current.Replace(pair.Key, pair.Value));
 
-        public static decimal LevenshteinDistancePercent(string str1, string str2)
+        public static StringBuilder AppendIfEmpty(this StringBuilder stringBuilder, object value)
         {
-            var val = LevenshteinDistance(str1, str2);
-            return 1 - (decimal)val / System.Math.Max(str1.Length, str2.Length);
+            if (stringBuilder.Length == 0) stringBuilder.Append(value);
+            return stringBuilder;
         }
+
+        public static decimal LevenshteinDistancePercent(string str1, string str2) => 
+            1 - (decimal)LevenshteinDistance(str1, str2) / Math.Max(str1.Length, str2.Length);
 
         public static int LevenshteinDistance(string str1, string str2)
         {
@@ -148,7 +132,7 @@ namespace MarukoLib.Lang
             return matrix[n, m];
         }
 
-        private static int Min(int first, int second, int third) => System.Math.Min(System.Math.Min(first, second), third);
+        private static int Min(int first, int second, int third) => Math.Min(Math.Min(first, second), third);
 
     }
 }
