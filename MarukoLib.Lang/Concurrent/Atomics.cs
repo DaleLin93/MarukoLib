@@ -4,7 +4,7 @@ using System.Threading;
 namespace MarukoLib.Lang.Concurrent
 {
 
-    public interface IAtomic<T>
+    public interface IAtomic<T> 
     {
 
         /// <summary>
@@ -38,7 +38,7 @@ namespace MarukoLib.Lang.Concurrent
 
     }
 
-    public abstract class AbstractAtomic<T> : IAtomic<T>
+    public abstract class AbstractAtomic<T> : IAtomic<T>, IContainer, IContainer<T>
     {
 
         protected const bool UseSpinning = true;
@@ -48,7 +48,7 @@ namespace MarukoLib.Lang.Concurrent
         private static readonly bool RefType = typeof(T).IsByRef;
 
         private readonly object _lock = new object();
-        
+
         /// <summary>
         /// <inheritdoc cref="IAtomic{T}"/>
         /// </summary>
@@ -83,6 +83,10 @@ namespace MarukoLib.Lang.Concurrent
             lock (_lock) Set(newValue = @operator(oldValue = Get()));
         }
 
+        object IContainer.Value => Get();
+
+        T IContainer<T>.Value => Get();
+        
     }
 
     public sealed class AtomicBool : AbstractAtomic<bool>
@@ -136,7 +140,7 @@ namespace MarukoLib.Lang.Concurrent
 
         private int _val;
 
-        public AtomicInt(int val= default) => Interlocked.Exchange(ref _val, val);
+        public AtomicInt(int val = default) => Interlocked.Exchange(ref _val, val);
 
         /// <summary>
         /// Get or set value.
@@ -170,7 +174,7 @@ namespace MarukoLib.Lang.Concurrent
         {
             Increment(delta, out _, out var val);
             return val;
-        } 
+        }
 
         public int GetAndIncrement(int delta = 1)
         {
@@ -185,6 +189,129 @@ namespace MarukoLib.Lang.Concurrent
         }
 
         public int GetAndDecrement(int delta = 1)
+        {
+            Decrement(delta, out var val, out _);
+            return val;
+        }
+
+    }
+
+    public sealed class AtomicLong : AbstractAtomic<long>
+    {
+
+        private long _val;
+
+        public AtomicLong(long val = default) => Interlocked.Exchange(ref _val, val);
+
+        /// <summary>
+        /// Get or set value.
+        /// </summary>
+        public long Value
+        {
+            get => Get();
+            set => Set(value);
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override long Get() => Interlocked.CompareExchange(ref _val, 0, 0);
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override long Set(long value) => Interlocked.Exchange(ref _val, value);
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override bool CompareAndSet(long oldValue, long newValue) => Interlocked.CompareExchange(ref _val, newValue, oldValue) == oldValue;
+
+        public void Increment(long delta, out long oldValue, out long newValue) => Compute(v => v + delta, out oldValue, out newValue);
+
+        public void Decrement(long delta, out long oldValue, out long newValue) => Compute(v => v - delta, out oldValue, out newValue);
+
+        public long IncrementAndGet(long delta = 1)
+        {
+            Increment(delta, out _, out var val);
+            return val;
+        }
+
+        public long GetAndIncrement(long delta = 1)
+        {
+            Increment(delta, out var val, out _);
+            return val;
+        }
+
+        public long DecrementAndGet(long delta = 1)
+        {
+            Decrement(delta, out _, out var val);
+            return val;
+        }
+
+        public long GetAndDecrement(long delta = 1)
+        {
+            Decrement(delta, out var val, out _);
+            return val;
+        }
+
+    }
+
+    public sealed class AtomicDouble : AbstractAtomic<double>
+    {
+
+        private double _val;
+
+        public AtomicDouble(double val = default) => Interlocked.Exchange(ref _val, val);
+
+        /// <summary>
+        /// Get or set value.
+        /// </summary>
+        public double Value
+        {
+            get => Get();
+            set => Set(value);
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override double Get() => Interlocked.CompareExchange(ref _val, 0, 0);
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override double Set(double value) => Interlocked.Exchange(ref _val, value);
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        [SuppressMessage("ReSharper", "CompareOfFloatsByEqualityOperator")]
+        public override bool CompareAndSet(double oldValue, double newValue) => Interlocked.CompareExchange(ref _val, newValue, oldValue) == oldValue;
+
+        public void Increment(double delta, out double oldValue, out double newValue) => Compute(v => v + delta, out oldValue, out newValue);
+
+        public void Decrement(double delta, out double oldValue, out double newValue) => Compute(v => v - delta, out oldValue, out newValue);
+
+        public double IncrementAndGet(int delta = 1)
+        {
+            Increment(delta, out _, out var val);
+            return val;
+        }
+
+        public double GetAndIncrement(double delta = 1)
+        {
+            Increment(delta, out var val, out _);
+            return val;
+        }
+
+        public double DecrementAndGet(double delta = 1)
+        {
+            Decrement(delta, out _, out var val);
+            return val;
+        }
+
+        public double GetAndDecrement(double delta = 1)
         {
             Decrement(delta, out var val, out _);
             return val;

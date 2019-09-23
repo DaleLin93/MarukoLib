@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 
 namespace MarukoLib.Lang
 {
+
     public interface IContainer
     {
 

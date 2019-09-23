@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Linq;
 
 namespace MarukoLib.Lang
@@ -7,13 +8,11 @@ namespace MarukoLib.Lang
     public sealed class ToStringOverridenWrapper
     {
 
-        public delegate string ToStringFunc(object value);
-
         public readonly object Value;
 
-        private readonly ToStringFunc _toStringFunc;
+        private readonly Func<object, string> _toStringFunc;
 
-        private ToStringOverridenWrapper(object value, ToStringFunc toStringFunc)
+        private ToStringOverridenWrapper(object value, Func<object, string> toStringFunc)
         {
             Value = value;
             _toStringFunc = toStringFunc;
@@ -21,11 +20,11 @@ namespace MarukoLib.Lang
 
         public static object TryUnwrap(object obj) => obj is ToStringOverridenWrapper wrapper ? wrapper.Value : obj;
 
-        public static ToStringOverridenWrapper Wrap(object value, ToStringFunc toStringFunc) => value is ToStringOverridenWrapper wrapper 
+        public static ToStringOverridenWrapper Wrap(object value, Func<object, string> toStringFunc) => value is ToStringOverridenWrapper wrapper 
             ? wrapper._toStringFunc == toStringFunc ? wrapper : new ToStringOverridenWrapper(wrapper.Value, toStringFunc)
             : new ToStringOverridenWrapper(value, toStringFunc);
 
-        public static ToStringOverridenWrapper[] Of(IEnumerable values, ToStringFunc toStringFunc) =>
+        public static ToStringOverridenWrapper[] Of(IEnumerable values, Func<object, string> toStringFunc) =>
             values.OfType<object>().Select(value => Wrap(value, toStringFunc)).ToArray();
 
         public bool Equals(ToStringOverridenWrapper other) => Equals(Value, other.Value);

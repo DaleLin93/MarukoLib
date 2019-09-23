@@ -57,6 +57,13 @@ namespace MarukoLib.Lang
             throw new ArgumentException($"generic argument not found, by name: '{genericArgumentName}'");
         }
 
+        public static Type GetGenericType(this Type type, Type genericType, int genericArgumentIndex = 0)
+        {
+            var types = GetGenericTypes(type, genericType, genericArgumentIndex).ToArray();
+            if (types.Length != 1) throw new ArgumentException("multiple definitions");
+            return types[0];
+        }
+
         public static IEnumerable<Type> GetGenericTypes(this Type type, Type genericType, int genericArgumentIndex = 0)
         {
             if (!genericType.IsGenericTypeDefinition) throw new ArgumentException("'genericType' is not a generic type definition");
@@ -100,6 +107,7 @@ namespace MarukoLib.Lang
 
         public static IEnumerable<Stack<Type>> GetTypePaths(this Type type, Type targetType)
         {
+            if (targetType.IsAssignableFrom(type)) throw new ArgumentException();
             bool IsMatched(Type t)
             {
                 if (t == targetType)
