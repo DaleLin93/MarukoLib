@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -30,6 +31,15 @@ namespace MarukoLib.Lang
                         return false;
                 }
             return true;
+        }
+
+        [SuppressMessage("ReSharper", "ConvertIfStatementToReturnStatement")]
+        public static string TrimOrPad(this string str, int length, char pad)
+        {
+            if (str == null) return new string(pad, length);
+            if (str.Length == length) return str;
+            if (str.Length > length) return str.Substring(0, length);
+            return str.PadRight(length, pad);
         }
 
         public static int IndexOf(this string self, string value, int startIndex)

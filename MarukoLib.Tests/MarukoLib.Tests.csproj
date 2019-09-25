@@ -116,6 +116,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="StringUtilsTests.cs" />
     <Compile Include="LabStreamingLayerTests.cs" />
     <Compile Include="AtomicsTests.cs" />
     <Compile Include="InteropTests.cs" />
