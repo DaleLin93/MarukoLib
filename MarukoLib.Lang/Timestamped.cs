@@ -6,11 +6,11 @@
 
         public Timestamped(long t, T v)
         {
-            TimeStamp = t;
+            Timestamp = t;
             Value = v;
         }
 
-        public long TimeStamp { get; }
+        public long Timestamp { get; }
 
         public T Value { get; }
 

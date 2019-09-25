@@ -18,6 +18,8 @@ namespace MarukoLib.Lang
     public static class TimeUnitExt
     {
 
+        public static TimeSpan ToTimeSpan(this TimeUnit unit, long time) => new TimeSpan(ToTicks(unit, time));
+
         public static long ToDays(this TimeUnit unit, long time) => ConvertTo(unit, time, TimeUnit.Day);
 
         public static long ToHours(this TimeUnit unit, long time) => ConvertTo(unit, time, TimeUnit.Hour);
@@ -31,6 +33,22 @@ namespace MarukoLib.Lang
         public static long ToTicks(this TimeUnit unit, long time) => ConvertTo(unit, time, TimeUnit.Tick);
 
         public static long ConvertTo(this TimeUnit src, long time, TimeUnit dst) => src > dst ? time * ((long)src / (long)dst) : time / ((long)dst / (long)src);
+
+        public static TimeSpan ToTimeSpan(this TimeUnit unit, double time) => new TimeSpan((long) ToTicks(unit, time));
+
+        public static double ToDays(this TimeUnit unit, double time) => ConvertTo(unit, time, TimeUnit.Day);
+
+        public static double ToHours(this TimeUnit unit, double time) => ConvertTo(unit, time, TimeUnit.Hour);
+
+        public static double ToMinutes(this TimeUnit unit, double time) => ConvertTo(unit, time, TimeUnit.Minute);
+
+        public static double ToSeconds(this TimeUnit unit, double time) => ConvertTo(unit, time, TimeUnit.Second);
+
+        public static double ToMilliseconds(this TimeUnit unit, double time) => ConvertTo(unit, time, TimeUnit.Millisecond);
+
+        public static double ToTicks(this TimeUnit unit, double time) => ConvertTo(unit, time, TimeUnit.Tick);
+
+        public static double ConvertTo(this TimeUnit src, double time, TimeUnit dst) => src > dst ? time * ((double)src / (double)dst) : time / ((double)dst / (double)src);
 
     }
 
