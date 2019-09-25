@@ -26,18 +26,34 @@ namespace MarukoLib.Lang.Concurrent
                 _minimumInterval = minimumInterval;
             }
 
-            public override void Acquire()
+            public override bool WaitOne(int millisecondsTimeout)
             {
-                lock (_sync)
+                var timing = millisecondsTimeout < 0;
+                var startTime = timing ? DateTimeUtils.CurrentTimeMillis : -1;
+                do
                 {
-                    while (!(_last == null || _clock.Time - _last.Value >= _minimumInterval)) { }
-                    _last = _clock.Time;
-                }
+                    lock (_sync)
+                    {
+                        if (_last == null || _clock.Time - _last.Value >= _minimumInterval)
+                        {
+                            _last = _clock.Time;
+                            return true;
+                        }
+                    }
+                } while (!timing || DateTimeUtils.CurrentTimeMillis - startTime < millisecondsTimeout);
+                return false;
             }
 
         }
 
-        public abstract void Acquire();
+        public abstract bool WaitOne(int millisecondsTimeout);
+
+    }
+
+    public static class FrequencyBarrierExt
+    {
+
+        public static bool WaitOne(this FrequencyBarrier frequencyBarrier) => frequencyBarrier.WaitOne(-1);
 
     }
 
