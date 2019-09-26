@@ -18,9 +18,11 @@ namespace MarukoLib.Interop
     public static class User32
     {
 
-        public delegate IntPtr WndProc(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
+        public delegate IntPtr WndProc(IntPtr hWnd, int msg, int wParam, int lParam);
 
         public delegate bool WndEnumProc(IntPtr hwnd, int lparm);
+
+        public delegate IntPtr HookProc(int nCode, int wParam, int lParam);
 
         [StructLayout(LayoutKind.Sequential)]
         public struct Rect
@@ -121,7 +123,7 @@ namespace MarukoLib.Interop
         /// Win32 (預設)控制項訊息回應方法
         /// </summary>
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        public static extern IntPtr DefWindowProc(IntPtr hWnd, int uMsg, IntPtr wParam, IntPtr lParam);
+        public static extern IntPtr DefWindowProc(IntPtr hWnd, int uMsg, int wParam, int lParam);
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         public static extern IntPtr CreateWindowEx(
@@ -163,6 +165,70 @@ namespace MarukoLib.Interop
 
         [DllImport("user32.dll", EntryPoint = "ShowCursor", CharSet = CharSet.Auto)]
         public static extern int ShowCursor(int status);
+
+        //键盘结构
+        [StructLayout(LayoutKind.Sequential)]
+        public class KeyboardHookStruct
+        {
+            public int vkCode;  //定一个虚拟键码。该代码必须有一个价值的范围1至254
+            public int scanCode; // 指定的硬件扫描码的关键
+            public int flags;  // 键标志
+            public int time; // 指定的时间戳记的这个讯息
+            public int dwExtraInfo; // 指定额外信息相关的信息
+        }
+
+        /// <summary>
+        /// Installs an application-defined hook procedure into a hook chain. You would install a hook procedure to monitor the system for certain types of events. These events are associated either with a specific thread or with all threads in the same desktop as the calling thread.
+        /// </summary>
+        /// <param name="idHook">
+        /// The type of hook procedure to be installed. This parameter can be one of the following values.
+        /// WH_CALLWNDPROC: 4; Installs a hook procedure that monitors messages before the system sends them to the destination window procedure. For more information, see the CallWndProc hook procedure.
+        /// WH_CALLWNDPROCRET: 12; Installs a hook procedure that monitors messages after they have been processed by the destination window procedure. For more information, see the CallWndRetProc hook procedure.
+        /// WH_CBT: 5; Installs a hook procedure that receives notifications useful to a CBT application. For more information, see the CBTProc hook procedure.
+        /// WH_DEBUG: 9; Installs a hook procedure useful for debugging other hook procedures. For more information, see the DebugProc hook procedure.
+        /// WH_FOREGROUNDIDLE: 11; Installs a hook procedure that will be called when the application's foreground thread is about to become idle. This hook is useful for performing low priority tasks during idle time. For more information, see the ForegroundIdleProc hook procedure.
+        /// WH_GETMESSAGE: 3; Installs a hook procedure that monitors messages posted to a message queue. For more information, see the GetMsgProc hook procedure.
+        /// WH_JOURNALPLAYBACK: 1; Installs a hook procedure that posts messages previously recorded by a WH_JOURNALRECORD hook procedure. For more information, see the JournalPlaybackProc hook procedure.
+        /// WH_JOURNALRECORD: 0; Installs a hook procedure that records input messages posted to the system message queue. This hook is useful for recording macros. For more information, see the JournalRecordProc hook procedure.
+        /// WH_KEYBOARD: 2; Installs a hook procedure that monitors keystroke messages. For more information, see the KeyboardProc hook procedure.
+        /// WH_KEYBOARD_LL: 13; Installs a hook procedure that monitors low-level keyboard input events. For more information, see the LowLevelKeyboardProc hook procedure.
+        /// WH_MOUSE: 7; Installs a hook procedure that monitors mouse messages. For more information, see the MouseProc hook procedure.
+        /// WH_MOUSE_LL: 14; Installs a hook procedure that monitors low-level mouse input events. For more information, see the LowLevelMouseProc hook procedure.
+        /// WH_MSGFILTER: -1; Installs a hook procedure that monitors messages generated as a result of an input event in a dialog box, message box, menu, or scroll bar. For more information, see the MessageProc hook procedure.
+        /// WH_SHELL: 10; Installs a hook procedure that receives notifications useful to shell applications. For more information, see the ShellProc hook procedure.
+        /// WH_SYSMSGFILTER: 6; Installs a hook procedure that monitors messages generated as a result of an input event in a dialog box, message box, menu, or scroll bar. The hook procedure monitors these messages for all applications in the same desktop as the calling thread. For more information, see the SysMsgProc hook procedure.
+        /// </param>
+        /// <param name="lpfn">A pointer to the hook procedure. If the dwThreadId parameter is zero or specifies the identifier of a thread created by a different process, the lpfn parameter must point to a hook procedure in a DLL. Otherwise, lpfn can point to a hook procedure in the code associated with the current process.</param>
+        /// <param name="hmod">A handle to the DLL containing the hook procedure pointed to by the lpfn parameter. The hMod parameter must be set to NULL if the dwThreadId parameter specifies a thread created by the current process and if the hook procedure is within the code associated with the current process.</param>
+        /// <param name="dwThreadId">The identifier of the thread with which the hook procedure is to be associated. For desktop apps, if this parameter is zero, the hook procedure is associated with all existing threads running in the same desktop as the calling thread. For Windows Store apps, see the Remarks section.</param>
+        /// <returns>
+        /// If the function succeeds, the return value is the handle to the hook procedure.
+        /// If the function fails, the return value is NULL.To get extended error information, call GetLastError.
+        /// </returns>
+        [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
+        public static extern IntPtr SetWindowsHookEx(int idHook, HookProc lpfn, IntPtr hmod, uint dwThreadId);
+
+        /// <summary>
+        /// Removes a hook procedure installed in a hook chain by the SetWindowsHookEx function.
+        /// </summary>
+        /// <param name="hhk">A handle to the hook to be removed. This parameter is a hook handle obtained by a previous call to SetWindowsHookEx.</param>
+        /// <returns>
+        /// If the function succeeds, the return value is nonzero.
+        /// If the function fails, the return value is zero.To get extended error information, call GetLastError.
+        /// </returns>
+        [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
+        public static extern bool UnhookWindowsHookEx(IntPtr hhk);
+
+        /// <summary>
+        /// Passes the hook information to the next hook procedure in the current hook chain. A hook procedure can call this function either before or after processing the hook information.
+        /// </summary>
+        /// <param name="hhk">This parameter is ignored.</param>
+        /// <param name="nCode">The hook code passed to the current hook procedure. The next hook procedure uses this code to determine how to process the hook information.</param>
+        /// <param name="wParam">The wParam value passed to the current hook procedure. The meaning of this parameter depends on the type of hook associated with the current hook chain.</param>
+        /// <param name="lParam">The lParam value passed to the current hook procedure. The meaning of this parameter depends on the type of hook associated with the current hook chain.</param>
+        /// <returns>This value is returned by the next hook procedure in the chain. The current hook procedure must also return this value. The meaning of the return value depends on the hook type. For more information, see the descriptions of the individual hook procedures.</returns>
+        [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
+        public static extern int CallNextHookEx(IntPtr hhk, int nCode, int wParam, int lParam);
 
         public static bool RegisterDeviceNotification(Window window, Guid guid)
         {

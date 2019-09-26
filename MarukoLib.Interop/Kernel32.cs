@@ -141,6 +141,9 @@ namespace MarukoLib.Interop
         public static extern IntPtr GetModuleHandle(string module);
 
         [DllImport("kernel32.dll")]
+        public static extern int GetCurrentThreadId();
+
+        [DllImport("kernel32.dll")]
         public static extern ulong VerSetConditionMask(ulong conditionMask, uint typeMask, byte condition);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
