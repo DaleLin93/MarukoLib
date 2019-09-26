@@ -34,7 +34,16 @@ namespace MarukoLib.Lang
         }
 
         [SuppressMessage("ReSharper", "ConvertIfStatementToReturnStatement")]
-        public static string TrimOrPad(this string str, int length, char pad)
+        public static string TrimOrPadLeft(this string str, int length, char pad)
+        {
+            if (str == null) return new string(pad, length);
+            if (str.Length == length) return str;
+            if (str.Length > length) return str.Substring(str.Length - length, length);
+            return str.PadLeft(length, pad);
+        }
+
+        [SuppressMessage("ReSharper", "ConvertIfStatementToReturnStatement")]
+        public static string TrimOrPadRight(this string str, int length, char pad)
         {
             if (str == null) return new string(pad, length);
             if (str.Length == length) return str;
