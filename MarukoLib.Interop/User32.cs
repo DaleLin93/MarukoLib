@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
@@ -23,6 +22,14 @@ namespace MarukoLib.Interop
         public delegate bool WndEnumProc(IntPtr hwnd, int lparm);
 
         public delegate IntPtr HookProc(int nCode, int wParam, int lParam);
+
+        public const int WM_KEYDOWN = 0x100;
+
+        public const int WM_KEYUP = 0x101;
+
+        public const int WM_SYSKEYDOWN = 0x104;
+
+        public const int WM_SYSKEYUP = 0x105;
 
         [StructLayout(LayoutKind.Sequential)]
         public struct Rect
@@ -228,7 +235,7 @@ namespace MarukoLib.Interop
         /// <param name="lParam">The lParam value passed to the current hook procedure. The meaning of this parameter depends on the type of hook associated with the current hook chain.</param>
         /// <returns>This value is returned by the next hook procedure in the chain. The current hook procedure must also return this value. The meaning of the return value depends on the hook type. For more information, see the descriptions of the individual hook procedures.</returns>
         [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
-        public static extern int CallNextHookEx(IntPtr hhk, int nCode, int wParam, int lParam);
+        public static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, int wParam, int lParam);
 
         public static bool RegisterDeviceNotification(Window window, Guid guid)
         {

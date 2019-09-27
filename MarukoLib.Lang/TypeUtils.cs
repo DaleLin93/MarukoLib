@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using JetBrains.Annotations;
 
 namespace MarukoLib.Lang
 {
@@ -10,12 +8,11 @@ namespace MarukoLib.Lang
     public static class TypeUtils
     {
 
-        public static object InitClassOrStruct(this Type type) => type.IsClass
-            ? (GetNoArgConstructor(type) ?? throw new ArgumentException($"No-arg constructor not found for class: {type}")).Invoke(EmptyArray<object>.Instance)
-            : Activator.CreateInstance(type);
+        public static T Default<T>() => (T)Default(typeof(T));
 
-        [CanBeNull]
-        public static ConstructorInfo GetNoArgConstructor(this Type type) => type.GetConstructor(EmptyArray<Type>.Instance);
+        public static object Default(Type type) => type.IsClass ? null : Activator.CreateInstance(type);
+
+        public static object InitClassOrStruct(this Type type) => Activator.CreateInstance(type);
 
         public static string GetFriendlyName(this Type type)
         {
