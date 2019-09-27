@@ -13,7 +13,7 @@ namespace MarukoLib.Lang
 
     }
 
-    public interface IRegistry
+    public interface IRegistry 
     {
 
         Type TargetType { get; }
@@ -112,18 +112,69 @@ namespace MarukoLib.Lang
 
     }
 
+    public sealed class ComplexRegistry : IRegistry
+    {
+
+        public ComplexRegistry(IRegistry parent)
+        {
+            Parent = parent;
+            Registry = new Registry(parent.TargetType);
+            TargetType = parent.TargetType;
+        }
+
+        public IRegistry Parent { get; }
+
+        public IRegistry Registry { get; }
+
+        public Type TargetType { get; }
+
+        public IRegistrable[] Registered
+        {
+            get
+            {
+                var dict = new Dictionary<string, IRegistrable>();
+                foreach (var registrable in Parent.Registered)
+                    dict[registrable.Identifier] = registrable;
+                foreach (var registrable in Registry.Registered)
+                    dict[registrable.Identifier] = registrable;
+                return dict.Values.ToArray();
+            }
+        }
+
+        public void Register(IRegistrable registrable)
+        {
+            if (Parent.LookUp(registrable.Identifier, out _)) throw new AccessViolationException();
+            Registry.Register(registrable);
+        }
+
+        public void Unregister(IRegistrable registrable)
+        {
+            if (Parent.LookUp(registrable.Identifier, out _)) throw new AccessViolationException();
+            Registry.Unregister(registrable);
+        }
+
+        public bool LookUp(string id, out IRegistrable registrable)
+        {
+            if (Registry.LookUp(id, out registrable)) return true;
+            if (Parent.LookUp(id, out registrable)) return true;
+            registrable = default;
+            return false;
+        }
+
+    }
+
     public sealed class Registry<T> : IRegistry, IRegistry<T> where T : IRegistrable
     {
 
         public Registry() : this(new Registry(typeof(T))) { }
 
-        public Registry(Registry baseRegistry)
+        public Registry(IRegistry baseRegistry)
         {
             if (baseRegistry.TargetType != typeof(T)) throw new ArgumentException("type not match");
             BaseRegistry = baseRegistry;
         }
 
-        public Registry BaseRegistry { get; }
+        public IRegistry BaseRegistry { get; }
 
         public Type TargetType => typeof(T);
 
@@ -136,7 +187,7 @@ namespace MarukoLib.Lang
         public bool LookUp(string id, out T registrable)
         {
             var flag = BaseRegistry.LookUp(id, out var t);
-            registrable = flag ? (T) t : default;
+            registrable = flag ? (T)t : default;
             return flag;
         }
 
@@ -153,15 +204,15 @@ namespace MarukoLib.Lang
     public sealed class Registries
     {
 
-        private readonly IDictionary<Type, Registry> _registered = new Dictionary<Type, Registry>();
+        private readonly IDictionary<Type, IRegistry> _registered = new Dictionary<Type, IRegistry>();
 
-        public Registry<T> Registry<T>() where T : IRegistrable => new Registry<T>(Registry(typeof(T)));
+        public IRegistry<T> Registry<T>() where T : IRegistrable => new Registry<T>(Registry(typeof(T)));
 
-        public Registry Registry(Type type)
+        public IRegistry Registry(Type type)
         {
             if (!typeof(IRegistrable).IsAssignableFrom(type))
                 throw new ArgumentException($"target type is not assignable from {typeof(IRegistrable)}");
-            Registry registry;
+            IRegistry registry;
             lock (_registered)
                 if (_registered.ContainsKey(type))
                     registry = _registered[type];
@@ -175,13 +226,17 @@ namespace MarukoLib.Lang
     public static class RegistryExt
     {
 
-        public static void RegisterAll<T>(this Registry<T> registry, params T[] registrables) where T : IRegistrable
+        public static void RegisterAll<T>(this IRegistry<T> registry, params T[] registrables) where T : IRegistrable => RegisterAll(registry, (IEnumerable<T>)registrables);
+
+        public static void RegisterAll<T>(this IRegistry<T> registry, IEnumerable<T> registrables) where T : IRegistrable
         {
             foreach (var registrable in registrables)
                 registry.Register(registrable);
         }
 
-        public static void UnregisterAll<T>(this Registry<T> registry, params T[] registrables) where T : IRegistrable
+        public static void UnregisterAll<T>(this IRegistry<T> registry, params T[] registrables) where T : IRegistrable => UnregisterAll(registry, (IEnumerable<T>)registrables);
+
+        public static void UnregisterAll<T>(this IRegistry<T> registry, IEnumerable<T> registrables) where T : IRegistrable
         {
             foreach (var registrable in registrables)
                 registry.Unregister(registrable);
