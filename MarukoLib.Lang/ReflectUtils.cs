@@ -20,9 +20,9 @@ namespace MarukoLib.Lang
             }
         }
 
-        public static IReadOnlyCollection<T> ReadStaticFields<T>(this Type type, bool recursively = true) => ReadFields<T>(type, null, recursively);
+        public static ICollection<T> ReadStaticFields<T>(this Type type, bool recursively = true) => ReadFields<T>(type, null, recursively);
 
-        public static IReadOnlyCollection<T> ReadFields<T>(this Type type, object obj = null, bool recursively = true)
+        public static ICollection<T> ReadFields<T>(this Type type, object obj = null, bool recursively = true)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             var values = new LinkedList<T>();

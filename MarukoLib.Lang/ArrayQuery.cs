@@ -120,7 +120,7 @@ namespace MarukoLib.Lang
 
         public static readonly ITypeConverter<ArrayQuery, string> TypeConverter = TypeConverterExt.OfNull2Null<ArrayQuery, string>(q => q.Query, s => new ArrayQuery(s));
 
-        private readonly IReadOnlyCollection<IExpression> _expressions;
+        private readonly ICollection<IExpression> _expressions;
 
         public ArrayQuery(string query)
         {
@@ -128,7 +128,7 @@ namespace MarukoLib.Lang
             _expressions = Parse(query);
         }
 
-        private static IReadOnlyCollection<IExpression> Parse(string query)
+        private static ICollection<IExpression> Parse(string query)
         {
             if (query.IsBlank()) return EmptyArray<IExpression>.Instance;
             var expressions = new LinkedList<IExpression>();

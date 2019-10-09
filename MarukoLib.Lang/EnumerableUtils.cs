@@ -6,6 +6,7 @@ using System.Text;
 
 namespace MarukoLib.Lang
 {
+
     public static class EnumerableUtils
     {
 
@@ -37,11 +38,9 @@ namespace MarukoLib.Lang
 
         public static IEnumerable<IReadOnlyCollection<T>> MovingWindows<T>(this IEnumerable<T> values, uint windowSize, double overlap)
         {
-            if (windowSize == 0)
-                throw new ArgumentException("window size must be positive");
-            if (overlap < 0 || overlap >= 1)
-                throw new ArgumentException("overlap must in range of [0, 1)");
-            var overlapSize = System.Math.Min((uint)(windowSize * overlap), windowSize - 1);
+            if (windowSize == 0) throw new ArgumentException("window size must be positive");
+            if (overlap < 0 || overlap >= 1) throw new ArgumentException("overlap must in range of [0, 1)");
+            var overlapSize = Math.Min((uint)(windowSize * overlap), windowSize - 1);
             var windowStep = windowSize - overlapSize;
             var samples = new LinkedList<T>();
             uint counter = 0;
@@ -56,7 +55,7 @@ namespace MarukoLib.Lang
                     if (counter >= windowStep)
                     {
                         counter = 0;
-                        yield return samples;
+                        yield return samples.AsReadonly();
                     }
                 }
             }

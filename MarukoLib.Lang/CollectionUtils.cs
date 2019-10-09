@@ -1,6 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MarukoLib.Lang
 {
@@ -11,16 +12,24 @@ namespace MarukoLib.Lang
         public class ReadonlyCollection<T> : IReadOnlyCollection<T>
         {
 
+            private readonly Func<int> _countFunc;
+
             public ReadonlyCollection(int count, IEnumerable<T> enumerable)
             {
                 Enumerable = enumerable;
-                Count = count;
+                _countFunc = () => count;
+            }
+
+            public ReadonlyCollection(ICollection<T> collection)
+            {
+                Enumerable = collection;
+                _countFunc = () => collection.Count;
             }
 
             public static IEnumerable<T> Unwrap(IEnumerable<T> enumerable) =>
                 (enumerable as ReadonlyCollection<T>)?.Enumerable ?? enumerable;
 
-            public int Count { get; }
+            public int Count => _countFunc();
 
             public IEnumerable<T> Enumerable { get; }
 
@@ -30,9 +39,20 @@ namespace MarukoLib.Lang
 
         }
 
-        public static ReadonlyCollection<T> AsReadonly<T>(this ICollection<T> collection) => new ReadonlyCollection<T>(collection.Count, collection);
+        [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
+        public static IReadOnlyCollection<T> AsReadonly<T>(this IEnumerable<T> enumerable)
+        {
+            if (enumerable is ICollection<T> collection) return AsReadonly(collection);
+            return AsReadonlyCollection(enumerable, enumerable.Count());
+        }
 
-        public static ReadonlyCollection<T> AsReadonlyCollection<T>(this IEnumerable<T> enumerable, int count) => new ReadonlyCollection<T>(count, enumerable);
+        public static IReadOnlyCollection<T> AsReadonly<T>(this ICollection<T> collection)
+        {
+            if (collection is IReadOnlyCollection<T> @readonly) return @readonly;
+            return new ReadonlyCollection<T>(collection);
+        }
+
+        public static IReadOnlyCollection<T> AsReadonlyCollection<T>(this IEnumerable<T> enumerable, int count) => new ReadonlyCollection<T>(count, enumerable);
 
         public static TR Collect<T, TR>(this ICollection<T> collection, TR value) where TR : T
         {

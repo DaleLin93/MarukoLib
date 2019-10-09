@@ -425,7 +425,7 @@ namespace MarukoLib.Lang
                     foreach (var property in _dictCommitted.Keys.OfType<IContextProperty>())
                         set.Add(property);
                 }
-                return set;
+                return set.AsReadonly();
             }
         }
 
