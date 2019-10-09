@@ -96,6 +96,7 @@
     <Compile Include="Image\BitmapUtils.cs" />
     <Compile Include="IO\ByteArrayStream.cs" />
     <Compile Include="IO\PathInfo.cs" />
+    <Compile Include="UI\ControlUtils.cs" />
     <Compile Include="UI\CursorUtils.cs" />
     <Compile Include="Crypt\Base64Utils.cs" />
     <Compile Include="UI\ColorUtils.cs" />
