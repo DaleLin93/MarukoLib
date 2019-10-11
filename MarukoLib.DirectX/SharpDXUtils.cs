@@ -15,6 +15,10 @@ namespace MarukoLib.DirectX
     public static class SharpDXUtils
     {
 
+        public static System.Drawing.Color ToSd(this SharpDX.Color color) => System.Drawing.Color.FromArgb(color.A, color.R, color.G, color.B);
+
+        public static System.Windows.Media.Color ToSwm(this SharpDX.Color color) => System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B);
+
         public static SharpDX.Color ToSdx(this System.Windows.Media.Color color) => new SharpDX.Color(color.ScR, color.ScG, color.ScB, color.ScA);
 
         public static SharpDX.Color ToSdx(this System.Drawing.Color color)
@@ -63,7 +67,6 @@ namespace MarukoLib.DirectX
             var halfDeltaHeight = rect.Height() * (scale - 1) / 2;
             return new RawRectangleF(rect.Left - halfDeltaWidth, rect.Top - halfDeltaHeight, rect.Right + halfDeltaWidth, rect.Bottom + halfDeltaHeight);
         }
-            
 
         public static bool Contains(this RawRectangleF rect, RawVector2 point) => Contains(rect, point.X, point.Y);
 
