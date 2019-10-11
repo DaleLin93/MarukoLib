@@ -16,6 +16,10 @@
 
         public static bool NotBlank(string str) => str?.IsNotBlank() ?? false;
 
+        public static bool Positive(byte value) => value > 0;
+
+        public static bool Positive(sbyte value) => value > 0;
+
         public static bool Positive(short value) => value > 0;
 
         public static bool Positive(ushort value) => value > 0;
