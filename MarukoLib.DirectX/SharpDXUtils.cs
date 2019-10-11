@@ -140,10 +140,12 @@ namespace MarukoLib.DirectX
         public static RawMatrix3x2 Rotate(this RawMatrix3x2 matrix, float angle) =>
             SharpDX.Matrix3x2.Multiply(SharpDX.Matrix3x2.Rotation(angle), matrix);
 
-        public static Bitmap ToD2D1Bitmap(this System.Drawing.Bitmap bitmap, RenderTarget renderTarget)
+        public static Bitmap ToD2D1Bitmap(this System.Drawing.Bitmap bitmap, RenderTarget renderTarget) => ToD2D1Bitmap(bitmap, renderTarget, renderTarget.PixelFormat);
+
+        public static Bitmap ToD2D1Bitmap(this System.Drawing.Bitmap bitmap, RenderTarget renderTarget, PixelFormat pixelFormat)
         {
             var sourceArea = new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height);
-            var bitmapProperties = new BitmapProperties(new PixelFormat(Format.R8G8B8A8_UNorm, AlphaMode.Premultiplied));
+            var bitmapProperties = new BitmapProperties(pixelFormat);
             var size = new SharpDX.Size2(bitmap.Width, bitmap.Height);
 
             // Transform pixels from BGRA to RGBA.
