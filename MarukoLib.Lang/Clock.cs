@@ -235,7 +235,7 @@ namespace MarukoLib.Lang
 
         public static IClock As(this IClock clock, TimeUnit timeUnit)
         {
-            while (true)
+            for (;;)
             {
                 if (clock.Unit == timeUnit) return clock;
                 if (clock is ConvertedClock converted)

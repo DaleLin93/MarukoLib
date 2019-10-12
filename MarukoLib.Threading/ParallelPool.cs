@@ -74,7 +74,7 @@ namespace MarukoLib.Threading
                 for (var i = 0; i < runningTasks.Length; i++)
                     runningTasks[i] = System.Threading.Tasks.Task.Factory.StartNew(() =>
                     {
-                        while (true)
+                        for (;;)
                         {
                             TaskDescriptor taskDescriptor;
                             lock (tasks)

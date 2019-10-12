@@ -55,7 +55,7 @@ namespace MarukoLib.Lang
         {
             if (value.IsEmpty()) return -1;
             var firstChar = value[0];
-            while (true)
+            for (;;)
             {
                 var indexOf = self.IndexOf(firstChar, startIndex);
                 if (indexOf == -1) return -1;
