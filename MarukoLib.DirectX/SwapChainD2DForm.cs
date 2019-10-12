@@ -11,18 +11,18 @@ using D3D11 = SharpDX.Direct3D11;
 namespace MarukoLib.DirectX
 {
 
-    public abstract class Direct2DForm : RenderForm, IDisposable
+    public abstract class SwapChainD2DForm : RenderForm, IDisposable
     {
 
         protected readonly object RenderContextLock = new object();
 
-        protected Direct2DForm()
+        protected SwapChainD2DForm()
         {
             Load += Window_OnLoaded;
             Resize += Window_OnResize;
         }
 
-        #region D3D Properties
+        #region DX Properties
 
         protected DXGI.PresentParameters PresentParameters { get; } = new DXGI.PresentParameters();
 

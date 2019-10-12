@@ -77,8 +77,11 @@
   <ItemGroup>
     <Compile Include="Direct2DComponent.cs" />
     <Compile Include="Direct2D.cs" />
+    <Compile Include="SimpleD2DForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="DirectXComponent.cs" />
-    <Compile Include="Direct2DForm.cs">
+    <Compile Include="SwapChainD2DForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -105,6 +108,10 @@
     <ProjectReference Include="..\MarukoLib.Interop\MarukoLib.Interop.csproj">
       <Project>{1f8d87bf-b42d-4735-be0a-890cc5df927b}</Project>
       <Name>MarukoLib.Interop</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MarukoLib.Logging\MarukoLib.Logging.csproj">
+      <Project>{36B35A27-9E3C-4A7B-870B-9DF3B1FE534B}</Project>
+      <Name>MarukoLib.Logging</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
