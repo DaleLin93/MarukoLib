@@ -2,6 +2,7 @@
 
 namespace MarukoLib.UI
 {
+
     public static class PointUtils
     {
 
@@ -21,11 +22,15 @@ namespace MarukoLib.UI
 
         public static double ManhattanToOrigin(this Point a) => System.Math.Abs(a.X) + System.Math.Abs(a.Y);
 
-        public static System.Drawing.Point RoundToSdPoint(this Point p) => new System.Drawing.Point((int)System.Math.Round(p.X), (int)System.Math.Round(p.Y));
+        public static System.Drawing.Point RoundToSdPoint(this Point p) => 
+            new System.Drawing.Point((int)System.Math.Round(p.X), (int)System.Math.Round(p.Y));
 
-        public static System.Drawing.Point FloorToSdPoint(this Point p) => new System.Drawing.Point((int)System.Math.Floor(p.X), (int)System.Math.Floor(p.Y));
+        public static System.Drawing.Point FloorToSdPoint(this Point p) => 
+            new System.Drawing.Point((int)System.Math.Floor(p.X), (int)System.Math.Floor(p.Y));
 
-        public static System.Drawing.Point CeilingToSdPoint(this Point p) => new System.Drawing.Point((int)System.Math.Ceiling(p.X), (int)System.Math.Ceiling(p.Y));
+        public static System.Drawing.Point CeilingToSdPoint(this Point p) => 
+            new System.Drawing.Point((int)System.Math.Ceiling(p.X), (int)System.Math.Ceiling(p.Y));
 
     }
+
 }
