@@ -10,6 +10,8 @@ namespace MarukoLib.Lang
     public static class StringUtils
     {
 
+        public const StringComparison StrictStrComp= StringComparison.Ordinal;
+
         public static bool IsNotEmpty(this string str) => !str.IsEmpty();
 
         public static bool IsEmpty(this string str) => str.Length <= 0;
@@ -70,17 +72,26 @@ namespace MarukoLib.Lang
             return str.IsEmpty() ? null : str;
         }
 
-        public static bool TryTrim(this string str, string start, string end, out string result, StringComparison comparison = StringComparison.Ordinal)
+        public static bool IsPartlyEqual(this string str, int startIndex, string target, StringComparison comparison = StrictStrComp) =>
+            string.Compare(str, startIndex, target, 0, target.Length, comparison) == 0;
+
+        public static bool TryTrim(this string str, string start, string end, out string result, bool multiple = true, StringComparison comparison = StrictStrComp)
         {
             var startIndex = 0;
-            var length = str.Length;
-            if (start != null && !start.IsEmpty() && str.StartsWith(start, comparison))
-            {
-                startIndex += start.Length;
-                length -= start.Length;
-            }
-            if (end != null && !end.IsEmpty() && str.EndsWith(end, comparison)) 
-                length -= end.Length;
+            var endIndex = str.Length;
+            if (!string.IsNullOrEmpty(start))
+                while (IsPartlyEqual(str, startIndex, start, comparison))
+                {
+                    startIndex += start.Length;
+                    if (!multiple) break;
+                }
+            if (!string.IsNullOrEmpty(end))
+                while (IsPartlyEqual(str, endIndex - end.Length, end, comparison))
+                {
+                    endIndex -= end.Length;
+                    if (!multiple) break;
+                }
+            var length = endIndex - startIndex;
             if (length == str.Length)
             {
                 result = str;
@@ -90,14 +101,50 @@ namespace MarukoLib.Lang
             return true;
         }
 
-        public static string Trim(this string str, string start, string end, StringComparison comparison = StringComparison.Ordinal) => 
-            TryTrim(str, start, end, out var result, comparison) ? str : result;
+        public static bool TryTrimStart(this string str, string trim, out string result, bool multiple = true, StringComparison comparison = StrictStrComp)
+        {
+            var trimCount = 0;
+            if (!string.IsNullOrEmpty(trim))
+                while (IsPartlyEqual(str, trimCount, trim, comparison))
+                {
+                    trimCount += trim.Length;
+                    if (!multiple) break;
+                }
+            if (trimCount == 0)
+            {
+                result = str;
+                return false;
+            }
+            result = str.Substring(trimCount);
+            return true;
+        }
 
-        public static string TrimStart(this string str, string trim, StringComparison comparison = StringComparison.Ordinal) => 
-            trim == null || trim.IsEmpty() || !str.StartsWith(trim, comparison) ? str : str.Substring(trim.Length);
+        public static bool TryTrimEnd(this string str, string trim, out string result, bool multiple = true, StringComparison comparison = StrictStrComp)
+        {
+            var trimCount = 0;
+            if (!string.IsNullOrEmpty(trim))
+                while (IsPartlyEqual(str, str.Length - trimCount - trim.Length, trim, comparison))
+                {
+                    trimCount += trim.Length;
+                    if (!multiple) break;
+                }
+            if (trimCount == 0)
+            {
+                result = str;
+                return false;
+            }
+            result = str.Substring(0, str.Length - trimCount);
+            return true;
+        }
 
-        public static string TrimEnd(this string str, string trim, StringComparison comparison = StringComparison.Ordinal) => 
-            trim == null || trim.IsEmpty() || !str.EndsWith(trim, comparison) ? str:str.Substring(0, str.Length - trim.Length);
+        public static string Trim(this string str, string start, string end, bool multiple = true, StringComparison comparison = StrictStrComp) => 
+            TryTrim(str, start, end, out var result, multiple, comparison) ? result : str;
+
+        public static string TrimStart(this string str, string trim, bool multiple = true, StringComparison comparison = StrictStrComp) => 
+             TryTrimStart(str, trim, out var result, multiple, comparison) ? result : str;
+
+        public static string TrimEnd(this string str, string trim, bool multiple = true, StringComparison comparison = StrictStrComp) =>
+            TryTrimEnd(str, trim, out var result, multiple, comparison) ? result : str;
 
         public static string[] GetLines(this string str) => Regex.Split(str, "\r\n|\r|\n");
 
