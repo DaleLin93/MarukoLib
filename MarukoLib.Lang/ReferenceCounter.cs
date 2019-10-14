@@ -28,22 +28,16 @@ namespace MarukoLib.Lang
 
             public bool Grab()
             {
-                if (_state.CompareAndSet(InitialState, GrabbedState))
-                {
-                    _grabAction();
-                    return true;
-                }
-                return false;
+                if (!_state.CompareAndSet(InitialState, GrabbedState)) return false;
+                _grabAction();
+                return true;
             }
 
-            public bool Release(bool destroy = false)
+            public bool Release(bool forceRelease = false)
             {
-                if (destroy ? _state.Set(ReleasedState) == GrabbedState : _state.CompareAndSet(GrabbedState, ReleasedState))
-                {
-                    _releaseAction();
-                    return true;
-                }
-                return false;
+                if (forceRelease ? _state.Set(ReleasedState) != GrabbedState : !_state.CompareAndSet(GrabbedState, ReleasedState)) return false;
+                _releaseAction();
+                return true;
             }
 
             void IDisposable.Dispose() => Release();
