@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace MarukoLib.Lang.Concurrent
@@ -257,6 +258,68 @@ namespace MarukoLib.Lang.Concurrent
 
     }
 
+    public sealed class AtomicSingle : AbstractAtomic<float>
+    {
+
+        private float _val;
+
+        public AtomicSingle(float val = default) => Interlocked.Exchange(ref _val, val);
+
+        /// <summary>
+        /// Get or set value.
+        /// </summary>
+        public float Value
+        {
+            get => Get();
+            set => Set(value);
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override float Get() => Interlocked.CompareExchange(ref _val, 0, 0);
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override float Set(float value) => Interlocked.Exchange(ref _val, value);
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        [SuppressMessage("ReSharper", "CompareOfFloatsByEqualityOperator")]
+        public override bool CompareAndSet(float oldValue, float newValue) => Interlocked.CompareExchange(ref _val, newValue, oldValue) == oldValue;
+
+        public void Increment(float delta, out float oldValue, out float newValue) => Compute(v => v + delta, out oldValue, out newValue);
+
+        public void Decrement(float delta, out float oldValue, out float newValue) => Compute(v => v - delta, out oldValue, out newValue);
+
+        public float IncrementAndGet(float delta = 1)
+        {
+            Increment(delta, out _, out var val);
+            return val;
+        }
+
+        public float GetAndIncrement(float delta = 1)
+        {
+            Increment(delta, out var val, out _);
+            return val;
+        }
+
+        public float DecrementAndGet(float delta = 1)
+        {
+            Decrement(delta, out _, out var val);
+            return val;
+        }
+
+        public float GetAndDecrement(float delta = 1)
+        {
+            Decrement(delta, out var val, out _);
+            return val;
+        }
+
+    }
+
     public sealed class AtomicDouble : AbstractAtomic<double>
     {
 
@@ -293,7 +356,7 @@ namespace MarukoLib.Lang.Concurrent
 
         public void Decrement(double delta, out double oldValue, out double newValue) => Compute(v => v - delta, out oldValue, out newValue);
 
-        public double IncrementAndGet(int delta = 1)
+        public double IncrementAndGet(double delta = 1)
         {
             Increment(delta, out _, out var val);
             return val;
@@ -316,6 +379,39 @@ namespace MarukoLib.Lang.Concurrent
             Decrement(delta, out var val, out _);
             return val;
         }
+
+    }
+
+    public sealed class AtomicPtr : AbstractAtomic<IntPtr>
+    {
+
+        private IntPtr _val;
+
+        public AtomicPtr(IntPtr val = default) => Interlocked.Exchange(ref _val, val);
+
+        /// <summary>
+        /// Get or set value.
+        /// </summary>
+        public IntPtr Value
+        {
+            get => Get();
+            set => Set(value);
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override IntPtr Get() => Interlocked.CompareExchange(ref _val, IntPtr.Zero, IntPtr.Zero);
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override IntPtr Set(IntPtr value) => Interlocked.Exchange(ref _val, value);
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override bool CompareAndSet(IntPtr oldValue, IntPtr newValue) => Interlocked.CompareExchange(ref _val, newValue, oldValue) == oldValue;
 
     }
 
