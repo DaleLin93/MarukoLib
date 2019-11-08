@@ -73,6 +73,16 @@ namespace MarukoLib.Interop
             public string dbcp_name;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        public class OVERLAPPED
+        {
+            public int Internal;
+            public int InternalHigh;
+            public int Offset;
+            public int OffSetHigh;
+            public int hEvent;
+        }
+
         [Flags]
         public enum DeviceBroadcast
         {
@@ -120,9 +130,6 @@ namespace MarukoLib.Interop
             public byte wReserved;
         }
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool CloseHandle(IntPtr hObject);
-
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern IntPtr CreateFile(
             [MarshalAs(UnmanagedType.LPTStr)] string filename,
@@ -132,6 +139,17 @@ namespace MarukoLib.Interop
             [MarshalAs(UnmanagedType.U4)] FileMode creationDisposition,
             [MarshalAs(UnmanagedType.U4)] FileAttributes flagsAndAttributes,
             IntPtr templateFile);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern bool WriteFile(IntPtr hFile, byte[] lpBuffer, int nNumberOfBytesToWrite,
+            ref int lpNumberOfBytesWriten, ref OVERLAPPED lpOverLapped);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern bool ReadFile(IntPtr hFile, byte[] lpBuffer, int nNumberOfBytesToRead,
+            ref int lpNumberOfBytesWriten, ref OVERLAPPED lpOverLapped);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool CloseHandle(IntPtr hObject);
 
         [Obsolete("Use Marshal.GetLastWin32Error", true)]
         [DllImport("kernel32.dll", SetLastError = true)]

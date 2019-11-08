@@ -242,7 +242,6 @@ namespace MarukoLib.Interop
             var hWnd = (new WindowInteropHelper(window)).Handle;
 
             var dbi = new Kernel32.DEV_BROADCAST_DEVICEINTERFACE();
-
             var size = Marshal.SizeOf(dbi);
             dbi.dbcc_size = size;
             dbi.dbcc_devicetype = (int)Kernel32.DeviceBroadcastType.DeviceInterface;
