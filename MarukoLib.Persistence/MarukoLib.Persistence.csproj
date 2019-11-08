@@ -99,6 +99,10 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\MarukoLib.Lang\MarukoLib.Lang.csproj">
+      <Project>{cdc6516e-2114-4e81-8ba0-9d3e93f8da15}</Project>
+      <Name>MarukoLib.Lang</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MarukoLib.Logging\MarukoLib.Logging.csproj">
       <Project>{36b35a27-9e3c-4a7b-870b-9df3b1fe534b}</Project>
       <Name>MarukoLib.Logging</Name>

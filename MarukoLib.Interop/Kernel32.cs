@@ -74,12 +74,12 @@ namespace MarukoLib.Interop
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public class OVERLAPPED
+        public struct OVERLAPPED
         {
             public int Internal;
             public int InternalHigh;
             public int Offset;
-            public int OffSetHigh;
+            public int OffsetHigh;
             public int hEvent;
         }
 
@@ -141,12 +141,12 @@ namespace MarukoLib.Interop
             IntPtr templateFile);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern bool WriteFile(IntPtr hFile, byte[] lpBuffer, int nNumberOfBytesToWrite,
-            ref int lpNumberOfBytesWriten, ref OVERLAPPED lpOverLapped);
+        public static extern bool WriteFile(IntPtr hFile, IntPtr lpBuffer, int nNumberOfBytesToWrite,
+            out int lpNumberOfBytesWriten, IntPtr lpOverlapped /* optional OVERLAPPED struct or IntPtr.Zero */);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern bool ReadFile(IntPtr hFile, byte[] lpBuffer, int nNumberOfBytesToRead,
-            ref int lpNumberOfBytesWriten, ref OVERLAPPED lpOverLapped);
+        public static extern bool ReadFile(IntPtr hFile, IntPtr lpBuffer, int nNumberOfBytesToRead,
+            out int lpNumberOfBytesWriten, IntPtr lpOverlapped /* optional OVERLAPPED struct or IntPtr.Zero */);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool CloseHandle(IntPtr hObject);
