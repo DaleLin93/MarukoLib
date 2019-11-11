@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using JetBrains.Annotations;
+using MarukoLib.Lang.Concurrent;
+using MarukoLib.Lang.Exceptions;
 
 namespace MarukoLib.Lang
 {
@@ -9,15 +10,23 @@ namespace MarukoLib.Lang
     public sealed class DisposablePool : IDisposable
     {
 
+        private readonly AtomicBool _disposed = new AtomicBool(false);
+
         private readonly LinkedList<IDisposable> _disposables = new LinkedList<IDisposable>();
 
         ~DisposablePool() => DisposeAll();
 
-        public T Add<T>(T disposable) where T : IDisposable
+        public bool AddIfDisposable(object obj) 
         {
-            lock (_disposables)
-                _disposables.AddFirst(disposable);
-            return disposable;
+            if (!(obj is IDisposable disposable)) return false;
+            Add(disposable);
+            return true;
+        }
+
+        public void Add(IDisposable disposable) 
+        {
+            if (_disposed.Value) throw new StateException("DisposablePool is already disposed.");
+            lock (_disposables) _disposables.AddFirst(disposable);
         }
 
         public void DisposeAll()
@@ -30,8 +39,11 @@ namespace MarukoLib.Lang
             }
         }
 
-        void IDisposable.Dispose() => DisposeAll();
-
+        public void Dispose()
+        {
+            if (_disposed.CompareAndSet(false, true))
+                DisposeAll();
+        }
     }
 
     public class DelegatedDisposable : IDisposable
@@ -41,7 +53,7 @@ namespace MarukoLib.Lang
 
         private readonly bool _autoDisposable;
 
-        private int _disposed = 0;
+        private readonly AtomicBool _disposed = new AtomicBool(false);
 
         public DelegatedDisposable([NotNull] Action @delegate, bool autoDisposable = true)
         {
@@ -56,8 +68,7 @@ namespace MarukoLib.Lang
 
         public void Dispose()
         {
-            if (Interlocked.CompareExchange(ref _disposed, 1, 0) == 0)
-                _delegate();
+            if (_disposed.CompareAndSet(false, true)) _delegate();
         }
     }
 
