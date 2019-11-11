@@ -17,6 +17,14 @@ namespace MarukoLib.IO
 
         public static readonly Endianness SystemByteOrder = BitConverter.IsLittleEndian ? Endianness.LittleEndian : Endianness.BigEndian;
 
+        public static byte ReverseBits(this byte b)
+        {
+            b = (byte) ((b & 0xF0) >> 4 | (b & 0x0F) << 4);
+            b = (byte) ((b & 0xCC) >> 2 | (b & 0x33) << 2);
+            b = (byte) ((b & 0xAA) >> 1 | (b & 0x55) << 1);
+            return b;
+        }
+
         public static short ReadInt16(this byte[] bytes, Endianness byteOrder, int startIndex = 0)
         {
             if (SystemByteOrder == byteOrder) return BitConverter.ToInt16(bytes, startIndex);

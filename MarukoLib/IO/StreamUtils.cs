@@ -18,7 +18,7 @@ namespace MarukoLib.IO
         public static void WriteFully(this Stream stream, byte[] buf, bool flush = true)
         {
             stream.Write(buf, 0, buf.Length);
-            stream.Flush();
+            if (flush) stream.Flush();
         }
 
         public static void SkipBytes(this Stream stream, uint byteCount)
@@ -40,7 +40,6 @@ namespace MarukoLib.IO
                     {
                         if (e.InnerException is SocketException socketEx)
                             throw new IOException($"Socket error occurred, error code: {socketEx.ErrorCode}", socketEx);
-                        System.Diagnostics.Debug.WriteLine(e);
                     }
                     if (b == -1) throw new EndOfStreamException();
                     remaining--;
@@ -69,13 +68,12 @@ namespace MarukoLib.IO
                         if (exceptionHandler?.Invoke(socketEx) ?? false) goto check_time;
                         throw new IOException($"Socket error occurred, error code: {socketEx.ErrorCode}", socketEx);
                     }
-                    System.Diagnostics.Debug.WriteLine(e);
                 }
                 if (readout == 0) throw new EndOfStreamException();
                 remaining -= readout;
                 check_time:
                 if (timeoutMillis > 0 && start + timeoutMillis < DateTimeUtils.CurrentTimeMillis)
-                    throw new TimeoutException($"Read timeout, {size - remaining}/{size} received" );
+                    throw new TimeoutException($"Read timeout, {size - remaining}/{size} received");
             } while (remaining > 0);
         }
 
