@@ -14,6 +14,8 @@ namespace MarukoLib.Lang
 
         public static object InitClassOrStruct(this Type type) => Activator.CreateInstance(type);
 
+        public static bool IsInstanceOfTypeOrNull(this Type type, object value) => type.IsInstanceOfType(value) || (type.IsClass || type.IsNullableType()) && value == null;
+
         public static string GetFriendlyName(this Type type)
         {
             var friendlyName = type.Name;

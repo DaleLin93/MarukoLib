@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
+using JetBrains.Annotations;
 using MarukoLib.Lang.Exceptions;
 
 namespace MarukoLib.Lang
@@ -12,7 +14,29 @@ namespace MarukoLib.Lang
     public interface IContextProperty
     {
 
-        Type ValueType { get; }
+        [NotNull] Type ValueType { get; }
+
+    }
+
+    public interface IReadonlyContext
+    {
+
+        [CanBeNull] object this[[NotNull] IContextProperty property] { get; }
+
+        [NotNull] IReadOnlyCollection<IContextProperty> Properties { get; }
+
+        bool TryGet([NotNull] IContextProperty property, [CanBeNull] out object result);
+
+    }
+
+    public interface IContext : IReadonlyContext
+    {
+
+        [CanBeNull] new object this[[NotNull] IContextProperty property] { get; set; }
+
+        void Set([NotNull] IContextProperty property, [CanBeNull] object value);
+
+        void Delete([NotNull] IContextProperty property);
 
     }
 
@@ -91,28 +115,6 @@ namespace MarukoLib.Lang
 
     }
 
-    public interface IReadonlyContext
-    {
-
-        object this[IContextProperty property] { get; }
-
-        IReadOnlyCollection<IContextProperty> Properties { get; }
-
-        bool TryGet(IContextProperty property, out object result);
-
-    }
-
-    public interface IContext : IReadonlyContext
-    {
-
-        new object this[IContextProperty property] { get; set; }
-
-        void Set(IContextProperty property, object value);
-
-        void Delete(IContextProperty property);
-
-    }
-
     public abstract class AbstractReadonlyContext : IReadonlyContext
     {
 
@@ -141,6 +143,36 @@ namespace MarukoLib.Lang
 
     }
 
+    public sealed class ReadonlyContext : AbstractReadonlyContext
+    {
+
+        private readonly IDictionary<IContextProperty, object> _dict;
+
+        public ReadonlyContext([NotNull] IReadonlyContext context) : this(context.ToDictionary(), false) { }
+
+        public ReadonlyContext([NotNull] IDictionary<IContextProperty, object> dictionary) : this(dictionary, true) { }
+
+        internal ReadonlyContext([NotNull] IDictionary<IContextProperty, object> dictionary, bool copy)
+        {
+            if (dictionary == null) throw new ArgumentNullException(nameof(dictionary));
+            _dict = copy ? new Dictionary<IContextProperty, object>(dictionary) : dictionary;
+        }
+
+        public override IReadOnlyCollection<IContextProperty> Properties => _dict.Keys.AsReadonly();
+
+        public override bool TryGet(IContextProperty property, out object result)
+        {
+            if (_dict.ContainsKey(property))
+            {
+                result = _dict[property];
+                return property.ValueType.IsInstanceOfTypeOrNull(result);
+            }
+            result = default;
+            return false;
+        }
+
+    }
+
     public abstract class AbstractContext : IContext
     {
 
@@ -163,72 +195,64 @@ namespace MarukoLib.Lang
     public sealed class Context : AbstractContext, IDictionary<IContextProperty, object>
     {
 
-        private readonly object _lock = new object();
-
         private readonly IDictionary<IContextProperty, object> _dict;
 
         public Context() : this(16) { }
 
-        public Context(int initialCapacity) : this(new Dictionary<IContextProperty, object>(initialCapacity)) { }
+        public Context(int initialCapacity) : this(new Dictionary<IContextProperty, object>(initialCapacity), false) { }
 
-        public Context(IReadonlyContext context) : this(context.ToDictionary()) { }
+        public Context(IReadonlyContext context) : this(context.ToDictionary(), false) { }
 
-        private Context(IDictionary<IContextProperty, object> dictionary) => _dict = dictionary ?? throw new ArgumentNullException(nameof(dictionary));
-        
+        public Context(IDictionary<IContextProperty, object> dictionary) : this(dictionary, true) { }
+
+        internal Context(IDictionary<IContextProperty, object> dictionary, bool copy)
+        {
+            if (dictionary == null) throw new ArgumentNullException(nameof(dictionary));
+            _dict = copy ? new Dictionary<IContextProperty, object>(dictionary) : dictionary;
+        }
+
         public static Context CopyOf(IDictionary dictionary)
         {
             var dict = new Dictionary<IContextProperty, object>();
             foreach (DictionaryEntry entry in dictionary)
-                if (entry.Key is IContextProperty contextProperty && IsTypeMatched(contextProperty.ValueType, entry.Value))
+                if (entry.Key is IContextProperty contextProperty && contextProperty.ValueType.IsInstanceOfTypeOrNull(entry.Value))
                     dict[contextProperty] = entry.Value;
-            return new Context(dict);
+            return new Context(dict, false);
         }
 
         public static Context CopyOf<TK, TV>(IDictionary<TK, TV> dictionary)
         {
             var dict = new Dictionary<IContextProperty, object>();
             foreach (var entry in dictionary)
-                if (entry.Key is IContextProperty contextProperty && IsTypeMatched(contextProperty.ValueType, entry.Value))
+                if (entry.Key is IContextProperty contextProperty && contextProperty.ValueType.IsInstanceOfTypeOrNull(entry.Value))
                     dict[contextProperty] = entry.Value;
-            return new Context(dict);
+            return new Context(dict, false);
         }
 
-        private static bool IsTypeMatched(Type type, object value) => type.IsInstanceOfType(value) || (type.IsClass || type.IsNullableType()) && value == null; 
-
-        public override IReadOnlyCollection<IContextProperty> Properties
-        {
-            get
-            {
-                lock (_lock)
-                    return _dict.Keys.ToArray();
-            }
-        }
+        public override IReadOnlyCollection<IContextProperty> Properties => _dict.Keys.AsReadonly();
 
         public override bool TryGet(IContextProperty property, out object result)
         {
-            lock (_lock)
-                if (_dict.ContainsKey(property))
-                {
-                    result = _dict[property];
-                    return IsTypeMatched(property.ValueType, result);
-                }
+            if (_dict.ContainsKey(property))
+            {
+                result = _dict[property];
+                return property.ValueType.IsInstanceOfTypeOrNull(result);
+            }
             result = default;
             return false;
         }
 
         public override void Set(IContextProperty property, object value)
         {
-            if (!IsTypeMatched(property.ValueType, value))
+            if (!property.ValueType.IsInstanceOfTypeOrNull(value))
                 throw new ArgumentException("value type mismatched");
-            lock (_lock)
-                _dict[property] = value;
+            _dict[property] = value;
         }
 
         public override void Delete(IContextProperty property)
         {
-            lock (_lock)
-                if (_dict.ContainsKey(property))
-                    _dict.Remove(property);
+            if (_dict.ContainsKey(property))
+                _dict.Remove(property);
         }
 
         ICollection<IContextProperty> IDictionary<IContextProperty, object>.Keys => _dict.Keys;
@@ -260,6 +284,44 @@ namespace MarukoLib.Lang
         bool IDictionary<IContextProperty, object>.Remove(IContextProperty key) => _dict.Remove(key);
 
         bool IDictionary<IContextProperty, object>.TryGetValue(IContextProperty key, out object value) => _dict.TryGetValue(key, out value);
+
+    }
+
+    public sealed class SynchronizedContext : AbstractContext
+    {
+
+        private readonly object _lock = new object();
+
+        private readonly IContext _context;
+
+        public SynchronizedContext([NotNull] IContext context) => _context = context ?? throw new ArgumentNullException(nameof(context));
+
+        public override IReadOnlyCollection<IContextProperty> Properties
+        {
+            get
+            {
+                lock (_lock)
+                    return _context.Properties.ToArray();
+            }
+        }
+
+        public override bool TryGet(IContextProperty property, out object result)
+        {
+            lock (_lock)
+                return _context.TryGet(property, out result);
+        }
+
+        public override void Set(IContextProperty property, object value)
+        {
+            lock (_lock)
+                _context.Set(property, value);
+        }
+
+        public override void Delete(IContextProperty property)
+        {
+            lock (_lock)
+                _context.Delete(property);
+        }
 
     }
 
@@ -571,6 +633,36 @@ namespace MarukoLib.Lang
         public override void Set(IContextProperty property, object value) => Context.Set(property, value);
 
         public override void Delete(IContextProperty property) => Context.Delete(property);
+
+    }
+
+    public sealed class ContextBuilder
+    {
+
+        private readonly IDictionary<IContextProperty, object> _dict;
+
+        public ContextBuilder() : this(16) { }
+
+        public ContextBuilder(int initialCapacity) => _dict = new Dictionary<IContextProperty, object>(initialCapacity);
+
+        public ContextBuilder(IReadonlyContext context) => _dict = context.ToDictionary();
+
+        public ContextBuilder(IDictionary<IContextProperty, object> dict) => _dict = 
+            new Dictionary<IContextProperty, object>(dict ?? throw new ArgumentNullException(nameof(dict)));
+
+        public ContextBuilder SetRawProperty(IContextProperty property, object value)
+        {
+            if (!property.ValueType.IsInstanceOfTypeOrNull(value))
+                throw new ArgumentException("value type mismatched");
+            _dict[property] = value;
+            return this;
+        }
+
+        public ContextBuilder SetProperty<TP>(ContextProperty<TP> property, TP value) => SetRawProperty(property, value);
+
+        public IContext Build() => new Context(_dict);
+
+        public IReadonlyContext BuildReadonly() => new ReadonlyContext(_dict, false);
 
     }
 
