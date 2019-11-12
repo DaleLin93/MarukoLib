@@ -92,16 +92,35 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Gdi32.cs" />
+    <Compile Include="InpOutX64.cs" />
+    <Compile Include="InpOut32.cs" />
     <Compile Include="InteropArray.cs" />
     <Compile Include="Kernel32.cs" />
     <Compile Include="NtDll.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="User32.cs" />
     <Compile Include="Version.cs" />
     <Compile Include="Win32Control.cs" />
     <Compile Include="WindowBlur.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\inpout32.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\inpoutx64.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
