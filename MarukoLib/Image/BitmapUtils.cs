@@ -25,6 +25,18 @@ namespace MarukoLib.Image
             return snapshot;
         }
 
+        public static Bitmap Copy(this Bitmap bitmap)
+        {
+            int width= bitmap.Width, height = bitmap.Height;
+            var output = new Bitmap(width, height, bitmap.PixelFormat);
+            using (var g = Graphics.FromImage(output))
+            {
+                g.InterpolationMode = InterpolationMode.NearestNeighbor;
+                g.DrawImage(bitmap, 0, 0, width, height);
+            }
+            return output;
+        }
+
         public static Bitmap ScaleToSize(this Bitmap bitmap, Size size) => bitmap.ScaleToSize(size.Width, size.Height);
 
         public static Bitmap ScaleToSize(this Bitmap bitmap, float ratio) => bitmap.ScaleToSize((int)(bitmap.Width * ratio), (int)(bitmap.Height * ratio));
