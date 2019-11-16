@@ -73,7 +73,7 @@ namespace MarukoLib.Lang
         }
 
         public static bool IsPartlyEqual(this string str, int startIndex, string target, StringComparison comparison = StrictStrComp) =>
-            startIndex >= 0 && startIndex < str.Length - target.Length && string.Compare(str, startIndex, target, 0, target.Length, comparison) == 0;
+            startIndex >= 0 && startIndex <= str.Length - target.Length && string.Compare(str, startIndex, target, 0, target.Length, comparison) == 0;
 
         public static bool TryTrim(this string str, string start, string end, out string result, bool multiple = true, StringComparison comparison = StrictStrComp)
         {
