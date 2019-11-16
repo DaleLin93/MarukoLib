@@ -32,7 +32,6 @@ namespace MarukoLib.Lang
 
         public static ulong Increment1(ulong val) => val + 1;
 
-
     }
 
 }

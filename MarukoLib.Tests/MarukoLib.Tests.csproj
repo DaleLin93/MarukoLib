@@ -123,6 +123,7 @@
     <Compile Include="ParallelPoolTests.cs" />
     <Compile Include="PseudoRandomTests.cs" />
     <Compile Include="ClockTests.cs" />
+    <Compile Include="SupplierTests.cs" />
     <Compile Include="TypeUtilsTests.cs" />
     <Compile Include="ContextTests.cs" />
     <Compile Include="ArrayQueryTests.cs" />

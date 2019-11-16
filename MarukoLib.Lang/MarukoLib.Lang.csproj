@@ -80,6 +80,7 @@
     <Compile Include="Registry.cs" />
     <Compile Include="Sequence.cs" />
     <Compile Include="StringUtils.cs" />
+    <Compile Include="Suppliers.cs" />
     <Compile Include="Timestamped.cs" />
     <Compile Include="ToStringOverridenWrapper.cs" />
     <Compile Include="TraversalUtils.cs" />
