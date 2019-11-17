@@ -94,7 +94,7 @@
     <Compile Include="Gdi32.cs" />
     <Compile Include="InpOutX64.cs" />
     <Compile Include="InpOut32.cs" />
-    <Compile Include="InteropArray.cs" />
+    <Compile Include="CoTaskArray.cs" />
     <Compile Include="Kernel32.cs" />
     <Compile Include="NtDll.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
