@@ -77,11 +77,9 @@ namespace MarukoLib.Lang
             get
             {
                 var time = _clock?.Time ?? 0;
-                if (_valueTimestamp == null || _expiration != null && time > _valueTimestamp + _expiration.Value)
-                {
-                    _value = _supplier();
-                    _valueTimestamp = time;
-                }
+                if (_valueTimestamp != null && (_expiration == null || !(time > _valueTimestamp + _expiration.Value))) return _value;
+                _value = _supplier();
+                _valueTimestamp = time;
                 return _value;
             }
         }
