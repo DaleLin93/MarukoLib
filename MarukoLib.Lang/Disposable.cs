@@ -18,6 +18,15 @@ namespace MarukoLib.Lang
 
         }
 
+        public sealed class NoAction : Disposable<T>
+        {
+
+            public NoAction(T value) : base(value) { }
+
+            protected override void DoDisposition() { }
+
+        }
+
         private bool _disposedValue = false;
 
         protected Disposable(T value) => Value = value;

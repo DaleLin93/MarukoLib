@@ -96,6 +96,7 @@
     <Compile Include="InpOut32.cs" />
     <Compile Include="CoTaskArray.cs" />
     <Compile Include="Kernel32.cs" />
+    <Compile Include="MarshalUtils.cs" />
     <Compile Include="NtDll.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
@@ -105,6 +106,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="ShCore.cs" />
     <Compile Include="User32.cs" />
     <Compile Include="Version.cs" />
     <Compile Include="Win32Control.cs" />
@@ -121,6 +123,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\inpoutx64.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MarukoLib.Lang\MarukoLib.Lang.csproj">
+      <Project>{cdc6516e-2114-4e81-8ba0-9d3e93f8da15}</Project>
+      <Name>MarukoLib.Lang</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -6,6 +6,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Interop;
 using MarukoLib.Interop.Native;
+using MarukoLib.Lang;
 
 namespace MarukoLib.Interop
 {
@@ -19,9 +20,11 @@ namespace MarukoLib.Interop
 
         public delegate IntPtr WndProc(IntPtr hWnd, int msg, int wParam, int lParam);
 
-        public delegate bool WndEnumProc(IntPtr hwnd, int lparm);
+        public delegate bool WndEnumProc(IntPtr hWnd, int lParam);
 
         public delegate IntPtr HookProc(int nCode, int wParam, int lParam);
+
+        public delegate bool MonitorEnumProc(IntPtr hMonitor, IntPtr hdc, ref Rect lpRect, int lParam);
 
         public const int WM_KEYDOWN = 0x100;
 
@@ -56,6 +59,34 @@ namespace MarukoLib.Interop
             public IntPtr hIconSm;
         }
 
+        /// <summary>
+        /// Monitor information.
+        /// </summary>
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MonitorInfo
+        {
+
+            public const uint FlagPrimary = 1;
+            
+            public uint size;
+            public Rect monitor;
+            public Rect work;
+            public uint flags;
+
+            public bool IsPrimary => (flags & FlagPrimary) == FlagPrimary;
+
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public class KeyboardHookStruct
+        {
+            public int vkCode;  //定一个虚拟键码。该代码必须有一个价值的范围1至254
+            public int scanCode; // 指定的硬件扫描码的关键
+            public int flags;  // 键标志
+            public int time; // 指定的时间戳记的这个讯息
+            public int dwExtraInfo; // 指定额外信息相关的信息
+        }
+
         public static readonly WndProc DefaultWindowProc = DefWindowProc;
 
         [DllImport("User32.dll")]
@@ -63,6 +94,39 @@ namespace MarukoLib.Interop
 
         [DllImport("user32.dll")]
         static extern IntPtr ReleaseDC(IntPtr hWnd, IntPtr hDc);
+
+      //  //https://msdn.microsoft.com/en-us/library/windows/desktop/dd145062(v=vs.85).aspx
+      //  [DllImport("user32.dll")]
+      //  private static extern IntPtr MonitorFromPoint([In]System.Drawing.Point pt, [In]uint dwFlags);
+
+        /// <summary>
+        /// Monitors from rect.
+        /// </summary>
+        /// <param name="rectPointer">The RECT pointer.</param>
+        /// <param name="flags">The flags.</param>
+        /// <returns></returns>
+        [DllImport("user32.dll")]
+        public static extern IntPtr MonitorFromRect([In] ref Rect rectPointer, uint flags);
+
+        /// <summary>
+        /// Enumerates through the display monitors.
+        /// </summary>
+        /// <param name="hdc">A handle to a display device context that defines the visible region of interest.</param>
+        /// <param name="lprcClip">A pointer to a RECT structure that specifies a clipping rectangle.</param>
+        /// <param name="lpfnEnum">A pointer to a MonitorEnumProc application-defined callback function.</param>
+        /// <param name="dwData">Application-defined data that EnumDisplayMonitors passes directly to the MonitorEnumProc function.</param>
+        /// <returns></returns>
+        [DllImport("user32.dll")]
+        public static extern bool EnumDisplayMonitors(IntPtr hdc, IntPtr lprcClip, MonitorEnumProc lpfnEnum, int dwData);
+
+        /// <summary>
+        /// Gets the monitor information.
+        /// </summary>
+        /// <param name="hMonitor">A handle to the display monitor of interest.</param>
+        /// <param name="monitorInfo">A pointer to a MonitorInfo instance created by this method.</param>
+        /// <returns></returns>
+        [DllImport("user32.dll")]
+        public static extern bool GetMonitorInfo(IntPtr hMonitor, ref MonitorInfo monitorInfo);
 
         [DllImport("user32.dll")]
         public static extern IntPtr GetForegroundWindow();
@@ -134,15 +198,9 @@ namespace MarukoLib.Interop
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         public static extern IntPtr CreateWindowEx(
-            int exStyle,
-            string className,
-            string windowName,
-            int style,
-            int x, int y,
-            int width, int height,
-            IntPtr hwndParent,
-            IntPtr hMenu,
-            IntPtr hInstance,
+            int exStyle, string className, string windowName,
+            int style, int x, int y, int width, int height,
+            IntPtr hwndParent, IntPtr hMenu, IntPtr hInstance,
             [MarshalAs(UnmanagedType.AsAny)] object pvParam);
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
@@ -170,19 +228,11 @@ namespace MarukoLib.Interop
         [DllImport("user32.dll")]
         public static extern int SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttributeData data);
 
-        [DllImport("user32.dll", EntryPoint = "ShowCursor", CharSet = CharSet.Auto)]
+        [DllImport("user32.dll")]
         public static extern int ShowCursor(int status);
 
-        //键盘结构
-        [StructLayout(LayoutKind.Sequential)]
-        public class KeyboardHookStruct
-        {
-            public int vkCode;  //定一个虚拟键码。该代码必须有一个价值的范围1至254
-            public int scanCode; // 指定的硬件扫描码的关键
-            public int flags;  // 键标志
-            public int time; // 指定的时间戳记的这个讯息
-            public int dwExtraInfo; // 指定额外信息相关的信息
-        }
+        [DllImport("user32.dll")]
+        public static extern bool SetProcessDPIAware();
 
         /// <summary>
         /// Installs an application-defined hook procedure into a hook chain. You would install a hook procedure to monitor the system for certain types of events. These events are associated either with a specific thread or with all threads in the same desktop as the calling thread.
@@ -263,6 +313,20 @@ namespace MarukoLib.Interop
 
         public static T UnmanagedToManaged<T>(IntPtr ptr) => (T)Marshal.PtrToStructure(ptr, typeof(T));
 
+        public static ICollection<IntPtr> EnumMonitors(IntPtr? hdc = null, Rect? clip = null)
+        {
+            var list = new LinkedList<IntPtr>();
+            using (var clipPtr = clip?.AllocUnmanaged(false) ?? new Disposable<IntPtr>.NoAction(IntPtr.Zero))
+            {
+                EnumDisplayMonitors(hdc ?? IntPtr.Zero, clipPtr.Value, (IntPtr hMonitor, IntPtr hDc, ref Rect rect, int p) =>
+                {
+                    list.AddLast(hMonitor);
+                    return true;
+                }, 0);
+            }
+            return list;
+        }
+
         public static ICollection<IntPtr> EnumWindows()
         {
             var list = new LinkedList<IntPtr>();
@@ -272,6 +336,13 @@ namespace MarukoLib.Interop
                 return true;
             }, 0);
             return list;
+        }
+
+        public static MonitorInfo GetMonitorInfo(IntPtr hMonitor)
+        {
+            var monitorInfo = new MonitorInfo();
+            GetMonitorInfo(hMonitor, ref monitorInfo);
+            return monitorInfo;
         }
 
         public static string GetWindowText(IntPtr hWnd)
