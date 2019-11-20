@@ -1,8 +1,18 @@
-﻿namespace MarukoLib.Lang
+﻿using System;
+
+namespace MarukoLib.Lang
 {
 
     public static class NumberUtils
     {
+
+        public static bool IsEqual(int a, int b, int tolerance) => Math.Abs(a - b) <= Math.Abs(tolerance);
+
+        public static bool IsEqual(long a, long b, long tolerance) => Math.Abs(a - b) <= Math.Abs(tolerance);
+
+        public static bool IsEqual(float a, float b, float tolerance) => Math.Abs(a - b) <= Math.Abs(tolerance);
+
+        public static bool IsEqual(double a, double b, double tolerance) => Math.Abs(a - b) <= Math.Abs(tolerance);
 
         public static int ParseByte(string str, byte defaultVal) => byte.TryParse(str, out var parsed) ? parsed : defaultVal;
 

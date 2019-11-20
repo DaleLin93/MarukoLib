@@ -99,14 +99,16 @@ namespace MarukoLib.Lang
 
     }
 
-    public abstract class OverridenClock : Clock
+    public class OverridenClock : Clock
     {
+
+        public OverridenClock(IClock originalClock, TimeUnit unit) : base(unit) => OriginalClock = originalClock;
 
         protected OverridenClock(IClock originalClock) : base(originalClock.Unit) => OriginalClock = originalClock;
 
-        protected OverridenClock(IClock originalClock, TimeUnit unit) : base(unit) => OriginalClock = originalClock;
-
         public IClock OriginalClock { get; }
+
+        public override long Time => Unit == OriginalClock.Unit ? OriginalClock.Time : OriginalClock.Get(Unit);
 
     }
 
@@ -120,6 +122,48 @@ namespace MarukoLib.Lang
         public long Offset { get; }
 
         public override long Time => OriginalClock.Time + Offset;
+
+    }
+
+    public class SyncedClock : OverridenClock
+    {
+
+        private readonly long _alignedLocal, _alignedRemote;
+
+        private readonly double _multiplier;
+
+        public SyncedClock(IClock originalClock, long localTime, long remoteTime, double multiplier = 1) : base(originalClock)
+        {
+            if (multiplier < 0) throw new ArgumentException($"{nameof(multiplier)} cannot be negative");
+            _alignedLocal = localTime;
+            _alignedRemote = remoteTime;
+            _multiplier = multiplier;
+        }
+
+        public static SyncedClock Sync(IClock clock, long remoteTime, double multiplier = 1) => new SyncedClock(clock, clock.Time, remoteTime, multiplier);
+
+        public static bool TrySync(IClock clock, Supplier<long> remoteTimeSupplier, TimeSpan syncWithin, int maxRetryCount, out SyncedClock synced) =>
+            TrySync(clock, unit => remoteTimeSupplier(), syncWithin, maxRetryCount, out synced);
+
+        public static bool TrySync(IClock clock, Func<TimeUnit, long> remoteTimeSupplier, TimeSpan syncWithin, int maxRetryCount, out SyncedClock synced)
+        {
+            for (int i = maxRetryCount - 1; i >= 0; i--)
+            {
+                var startTicks = clock.GetTicks();
+                var remoteTime = remoteTimeSupplier(clock.Unit);
+                var endTicks = clock.GetTicks();
+                var elapsedTicks = endTicks - startTicks;
+                if (elapsedTicks / 2 < syncWithin.Ticks)
+                {
+                    synced = new SyncedClock(clock, TimeUnit.Tick.ConvertTo(startTicks, clock.Unit), remoteTime, 1);
+                    return true;
+                }
+            }
+            synced = null;
+            return false;
+        }
+
+        public override long Time => _alignedRemote + (long)((OriginalClock.Time - _alignedLocal) * _multiplier) + (_alignedRemote - _alignedLocal);
 
     }
 
@@ -212,16 +256,7 @@ namespace MarukoLib.Lang
 
     public static class ClockExt
     {
-
-        private class ConvertedClock : OverridenClock
-        {
-
-            public ConvertedClock(TimeUnit unit, IClock originalClock) : base(originalClock, unit) { }
-
-            public override long Time => OriginalClock.Get(Unit);
-
-        }
-
+        
         private class MappedClock : OverridenClock
         {
 
@@ -238,12 +273,12 @@ namespace MarukoLib.Lang
             for (;;)
             {
                 if (clock.Unit == timeUnit) return clock;
-                if (clock is ConvertedClock converted)
+                if (clock is OverridenClock converted)
                 {
                     clock = converted.OriginalClock;
                     continue;
                 }
-                return new ConvertedClock(timeUnit, clock);
+                return new OverridenClock(clock, timeUnit);
             }
         }
 
@@ -253,7 +288,11 @@ namespace MarukoLib.Lang
 
         public static IClock Adjust(this IClock clock, long offset) => Convert(clock, time => time + offset);
 
-        public static IClock Adjust(this IClock clock, long offset, double scale) => Convert(clock, time => (long)((time + offset) * scale));
+        public static IClock Adjust(this IClock clock, long offset, double scale)
+        {
+            if (scale < 0) throw new ArgumentException($"{nameof(scale)} cannot be negative");
+            return Convert(clock, time => (long)((time + offset) * scale));
+        }
 
         public static long GetDays(this IClock clock) => Get(clock, TimeUnit.Day);
 
