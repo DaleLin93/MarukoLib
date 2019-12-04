@@ -89,7 +89,10 @@ namespace MarukoLib.Interop
 
         public static readonly WndProc DefaultWindowProc = DefWindowProc;
 
-        [DllImport("User32.dll")]
+        [DllImport("user32.dll")]
+        public extern static int PostMessage(IntPtr handle, int msg, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("user32.dll")]
         public static extern IntPtr GetDC(IntPtr hwnd);
 
         [DllImport("user32.dll")]
