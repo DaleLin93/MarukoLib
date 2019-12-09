@@ -47,6 +47,16 @@ namespace MarukoLib.UI
             return FindAndSelectFirst(selector, predicate, defaultIndex);
         }
 
+        public static bool FindAndSelectFirstByTag(this Selector selector, Predicate<object> tagPredicate, int? defaultIndex = null)
+        {
+            Predicate<object> predicate;
+            if (tagPredicate == null)
+                predicate = null;
+            else
+                predicate = item => item is FrameworkElement control && tagPredicate(control.Tag);
+            return FindAndSelectFirst(selector, predicate, defaultIndex);
+        }
+
         public static bool FindAndSelectFirstByTag(this Selector selector, object tagObj,
             int? defaultIndex = null, bool compareRef = true)
         {

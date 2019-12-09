@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace MarukoLib.Lang
 {
@@ -48,15 +49,11 @@ namespace MarukoLib.Lang
 
         public static bool IsDigit(char c) => c >= '0' && c <= '9';
 
-        public static bool IsDigit(string str)
-        {
-            if(str.Length == 0)
-                return false;
-            foreach (var ch in str)
-                if (!IsDigit(ch))
-                    return false;
-            return true;
-        }
+        public static bool IsDigit(string str) => str.Length != 0 && str.All(IsDigit);
+
+        public static double ConvertNaN(this double val, double newValue) => double.IsNaN(val) ? newValue : val;
+
+        public static double NaN2Zero(this double val) => ConvertNaN(val, 0);
 
     }
 }

@@ -192,8 +192,6 @@ namespace MarukoLib.Lang
             return indices;
         }
 
-        public static double NaN2Zero(this double val) => double.IsNaN(val) ? 0 : val; 
-
         public static IReadOnlyCollection<int> Ints(int start, bool includeStart, int end, bool includeEnd) =>
             new IntRange(start, includeStart, end, includeEnd);
 
