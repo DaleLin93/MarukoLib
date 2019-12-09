@@ -58,7 +58,6 @@
     <Compile Include="Delegates.cs" />
     <Compile Include="Describable.cs" />
     <Compile Include="DictionaryUtils.cs" />
-    <Compile Include="Disposable.cs" />
     <Compile Include="Disposables.cs" />
     <Compile Include="EnumerableUtils.cs" />
     <Compile Include="EnumUtils.cs" />
