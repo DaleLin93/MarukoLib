@@ -13,14 +13,14 @@ namespace MarukoLib.Lang.Concurrent
 
             private readonly Clock _clock;
 
-            private readonly uint _minimumInterval;
+            private readonly long _minimumInterval;
 
-            private long? _last = null;
+            private long? _last;
 
             public MinimumInterval(Clock clock, TimeSpan timeSpan)
-                : this(clock, (uint)TimeUnit.Tick.ConvertTo(timeSpan.Ticks, clock.Unit)) { }
+                : this(clock, TimeUnit.Tick.ConvertTo(timeSpan.Ticks, clock.Unit)) { }
 
-            public MinimumInterval(Clock clock, uint minimumInterval)
+            public MinimumInterval(Clock clock, long minimumInterval)
             {
                 _clock = clock;
                 _minimumInterval = minimumInterval;
@@ -28,15 +28,16 @@ namespace MarukoLib.Lang.Concurrent
 
             public override bool WaitOne(int millisecondsTimeout)
             {
-                var timing = millisecondsTimeout < 0;
+                var timing = millisecondsTimeout > 0;
                 var startTime = timing ? DateTimeUtils.CurrentTimeMillis : -1;
                 do
                 {
                     lock (_sync)
                     {
-                        if (_last == null || _clock.Time - _last.Value >= _minimumInterval)
+                        var time = _clock.Time;
+                        if (_last == null || time - _last.Value >= _minimumInterval)
                         {
-                            _last = _clock.Time;
+                            _last = time;
                             return true;
                         }
                     }
@@ -45,6 +46,8 @@ namespace MarukoLib.Lang.Concurrent
             }
 
         }
+
+        public static FrequencyBarrier WithMinimumInterval(long intervalMillis) => new MinimumInterval(Clock.SystemMillisClock, intervalMillis);
 
         public abstract bool WaitOne(int millisecondsTimeout);
 
