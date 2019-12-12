@@ -16,36 +16,36 @@ namespace MarukoLib.Lang
     public interface IRegistry 
     {
 
-        Type TargetType { get; }
+        [NotNull] Type TargetType { get; }
 
-        IRegistrable[] Registered { get; }
+        [NotNull] IRegistrable[] Registered { get; }
 
-        void Register(IRegistrable registrable);
+        void Register([NotNull] IRegistrable registrable);
 
-        void Unregister(IRegistrable registrable);
+        void Unregister([NotNull] IRegistrable registrable);
 
         /// <summary>
         /// Look up registrable by ID.
         /// </summary>
         /// <returns>true if specific registrable is found, and value will be non-null.</returns>
-        bool LookUp(string id, out IRegistrable registrable);
+        bool LookUp([CanBeNull] string id, [CanBeNull] out IRegistrable registrable);
 
     }
 
     public interface IRegistry<T> where T : IRegistrable
     {
 
-        T[] Registered { get; }
+        [NotNull] T[] Registered { get; }
 
-        void Register(T registrable);
+        void Register([NotNull] T registrable);
 
-        void Unregister(T registrable);
+        void Unregister([NotNull] T registrable);
 
         /// <summary>
         /// Look up registrable by ID.
         /// </summary>
         /// <returns>true if specific registrable is found, and value will be non-null.</returns>
-        bool LookUp(string id, out T registrable);
+        bool LookUp([CanBeNull] string id, [NotNull] out T registrable);
 
     }
 
@@ -74,7 +74,7 @@ namespace MarukoLib.Lang
         public void Register(IRegistrable registrable)
         {
             CheckType(registrable);
-            var id = registrable.Identifier ?? throw new ArgumentException("Id of registrable cannot be null");
+            var id = registrable.Identifier;
             lock (_registered)
                 if (_registered.ContainsKey(id))
                     throw new ArgumentException($"identifier already used: {id}");
@@ -85,7 +85,7 @@ namespace MarukoLib.Lang
         public void Unregister(IRegistrable registrable)
         {
             CheckType(registrable);
-            var id = registrable.Identifier ?? throw new ArgumentException("Id of registrable cannot be null");
+            var id = registrable.Identifier;
             lock (_registered)
                 if (!_registered.ContainsKey(id) || !ReferenceEquals(_registered[id], registrable))
                     throw new ArgumentException($"unregistered: {id}");
@@ -95,13 +95,13 @@ namespace MarukoLib.Lang
 
         public bool LookUp(string id, out IRegistrable registrable)
         {
-            var contains = false;
-            registrable = default;
             if (id != null)
                 lock (_registered)
-                    if (contains = _registered.ContainsKey(id))
-                        registrable = _registered[id];
-            return contains;
+                    // ReSharper disable once AssignmentInConditionalExpression
+                    if (_registered.TryGetValue(id, out registrable))
+                        return true;
+            registrable = default;
+            return false;
         }
 
         internal void CheckType(IRegistrable registrable)
@@ -187,8 +187,9 @@ namespace MarukoLib.Lang
         public bool LookUp(string id, out T registrable)
         {
             var flag = BaseRegistry.LookUp(id, out var t);
+            // ReSharper disable once AssignNullToNotNullAttribute
             registrable = flag ? (T)t : default;
-            return flag;
+            return flag && registrable != null;
         }
 
         IRegistrable[] IRegistry.Registered => BaseRegistry.Registered;
