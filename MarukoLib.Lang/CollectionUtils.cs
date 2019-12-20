@@ -74,5 +74,11 @@ namespace MarukoLib.Lang
                 collection.Add(tv);
         }
 
+        public static void RemoveAll<T, TV>(this ICollection<T> collection, IEnumerable<TV> enumerable) where TV : T
+        {
+            foreach (var tv in enumerable)
+                collection.Remove(tv);
+        }
+
     }
 }
