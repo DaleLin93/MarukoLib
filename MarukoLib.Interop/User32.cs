@@ -35,11 +35,22 @@ namespace MarukoLib.Interop
         public const int WM_SYSKEYUP = 0x105;
 
         [StructLayout(LayoutKind.Sequential)]
+        public struct Point
+        {
+
+            public int X, Y;
+
+            public override string ToString() => $"{nameof(X)}: {X}, {nameof(Y)}: {Y}";
+
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
         public struct Rect
         {
             public int Left, Top, Right, Bottom;
 
             public override string ToString() => $"{nameof(Left)}: {Left}, {nameof(Top)}: {Top}, {nameof(Right)}: {Right}, {nameof(Bottom)}: {Bottom}";
+
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -89,8 +100,12 @@ namespace MarukoLib.Interop
 
         public static readonly WndProc DefaultWindowProc = DefWindowProc;
 
+
         [DllImport("user32.dll")]
-        public extern static int PostMessage(IntPtr handle, int msg, IntPtr wParam, IntPtr lParam);
+        public static extern bool GetCursorPos(out Point lpPoint);
+
+        [DllImport("user32.dll")]
+        public static extern int PostMessage(IntPtr handle, int msg, IntPtr wParam, IntPtr lParam);
 
         [DllImport("user32.dll")]
         public static extern IntPtr GetDC(IntPtr hwnd);

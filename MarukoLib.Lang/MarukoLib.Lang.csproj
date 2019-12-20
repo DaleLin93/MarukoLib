@@ -53,6 +53,7 @@
     <Compile Include="CollectionUtils.cs" />
     <Compile Include="Concurrent\Atomics.cs" />
     <Compile Include="Concurrent\CountDownLatch.cs" />
+    <Compile Include="Concurrent\CyclicCounter.cs" />
     <Compile Include="Concurrent\FrequencyBarrier.cs" />
     <Compile Include="Container.cs" />
     <Compile Include="Context.cs" />
