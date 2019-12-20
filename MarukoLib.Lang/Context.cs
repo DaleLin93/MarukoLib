@@ -60,6 +60,9 @@ namespace MarukoLib.Lang
 
         public virtual T DefaultValue { get; }
 
+        /// <summary>
+        /// Try get value that contained in given context.
+        /// </summary>
         public bool TryGet(IReadonlyContext context, out T result)
         {
             if (!context.TryGet(this, out var resultObj))
@@ -71,6 +74,10 @@ namespace MarukoLib.Lang
             return true;
         }
 
+        /// <summary>
+        /// Get value that contained in given context or use default value of this property.
+        /// </summary>
+        /// <exception cref="KeyNotFoundException">This property is not existed in given context, and not available default value for this property.</exception>
         public T Get(IReadonlyContext context)
         {
             if (!context.TryGet(this, out var result))
