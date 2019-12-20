@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -57,9 +56,9 @@ namespace MarukoLib.Lang
 
         public Type ValueType => typeof(T);
 
-        public virtual bool HasDefaultValue { get; } = false;
+        public virtual bool HasDefaultValue { get; }
 
-        public virtual T DefaultValue { get; } = default;
+        public virtual T DefaultValue { get; }
 
         public bool TryGet(IReadonlyContext context, out T result)
         {
