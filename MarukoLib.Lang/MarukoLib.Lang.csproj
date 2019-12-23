@@ -69,6 +69,7 @@
     <Compile Include="Functions.cs" />
     <Compile Include="MatrixQuery.cs" />
     <Compile Include="MatrixUtils.cs" />
+    <Compile Include="Named.cs" />
     <Compile Include="NumberUtils.cs" />
     <Compile Include="ObjectWrapper.cs" />
     <Compile Include="Pair.cs" />
@@ -93,5 +94,6 @@
       <Version>2019.1.3</Version>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
