@@ -75,11 +75,12 @@
     <Compile Include="Pair.cs" />
     <Compile Include="Predicates.cs" />
     <Compile Include="ProcessUtils.cs" />
-    <Compile Include="PseudoRandom.cs" />
     <Compile Include="ReferenceCounter.cs" />
     <Compile Include="ReflectUtils.cs" />
     <Compile Include="Registry.cs" />
-    <Compile Include="Sequence.cs" />
+    <Compile Include="Sequence\RandomBools.cs" />
+    <Compile Include="Sequence\RandomSequence.cs" />
+    <Compile Include="Sequence\Sequence.cs" />
     <Compile Include="StringUtils.cs" />
     <Compile Include="Suppliers.cs" />
     <Compile Include="Timestamped.cs" />
