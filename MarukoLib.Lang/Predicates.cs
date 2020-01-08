@@ -36,9 +36,13 @@
 
         public static bool Positive(double value) => value > 0;
 
+        public static bool Positive(decimal value) => value > 0;
+
         public static bool Nonnegative(float value) => value >= 0;
 
         public static bool Nonnegative(double value) => value >= 0;
+
+        public static bool Nonnegative(decimal value) => value >= 0;
 
     }
 
