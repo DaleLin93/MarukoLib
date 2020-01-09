@@ -227,12 +227,26 @@ namespace MarukoLib.Lang
     public static class RegistryExt
     {
 
+        public static Registry<T> OfType<T>(this IRegistry registry) where T : IRegistrable => new Registry<T>(registry);
+
+        public static void RegisterAll<T>(this IRegistry registry, IEnumerable<T> registrables) where T : IRegistrable
+        {
+            foreach (var registrable in registrables)
+                registry.Register(registrable);
+        }
+
         public static void RegisterAll<T>(this IRegistry<T> registry, params T[] registrables) where T : IRegistrable => RegisterAll(registry, (IEnumerable<T>)registrables);
 
         public static void RegisterAll<T>(this IRegistry<T> registry, IEnumerable<T> registrables) where T : IRegistrable
         {
             foreach (var registrable in registrables)
                 registry.Register(registrable);
+        }
+
+        public static void UnregisterAll<T>(this IRegistry registry, IEnumerable<T> registrables) where T : IRegistrable
+        {
+            foreach (var registrable in registrables)
+                registry.Unregister(registrable);
         }
 
         public static void UnregisterAll<T>(this IRegistry<T> registry, params T[] registrables) where T : IRegistrable => UnregisterAll(registry, (IEnumerable<T>)registrables);

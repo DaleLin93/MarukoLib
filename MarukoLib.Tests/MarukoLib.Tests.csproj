@@ -122,7 +122,7 @@
     <Compile Include="AtomicsTests.cs" />
     <Compile Include="InteropTests.cs" />
     <Compile Include="ParallelPoolTests.cs" />
-    <Compile Include="PseudoRandomTests.cs" />
+    <Compile Include="SequenceTests.cs" />
     <Compile Include="ClockTests.cs" />
     <Compile Include="SupplierTests.cs" />
     <Compile Include="TypeUtilsTests.cs" />

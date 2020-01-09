@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -57,10 +56,13 @@ namespace MarukoLib.Lang
 
         public Type ValueType => typeof(T);
 
-        public virtual bool HasDefaultValue { get; } = false;
+        public virtual bool HasDefaultValue { get; }
 
-        public virtual T DefaultValue { get; } = default;
+        public virtual T DefaultValue { get; }
 
+        /// <summary>
+        /// Try get value that contained in given context.
+        /// </summary>
         public bool TryGet(IReadonlyContext context, out T result)
         {
             if (!context.TryGet(this, out var resultObj))
@@ -72,6 +74,10 @@ namespace MarukoLib.Lang
             return true;
         }
 
+        /// <summary>
+        /// Get value that contained in given context or use default value of this property.
+        /// </summary>
+        /// <exception cref="KeyNotFoundException">This property is not existed in given context, and not available default value for this property.</exception>
         public T Get(IReadonlyContext context)
         {
             if (!context.TryGet(this, out var result))

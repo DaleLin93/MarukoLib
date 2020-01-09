@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -34,6 +35,12 @@ namespace MarukoLib.Lang
                 }
             return true;
         }
+
+        public static string ToPascalCase(this string str, CultureInfo culture = null) =>
+            string.Concat(char.ToUpper(str[0], culture ?? CultureInfo.CurrentCulture), str.Substring(1));
+
+        public static string ToCamelCase(this string str, CultureInfo culture = null) =>
+            string.Concat(char.ToLower(str[0], culture ?? CultureInfo.CurrentCulture), str.Substring(1));
 
         [SuppressMessage("ReSharper", "ConvertIfStatementToReturnStatement")]
         public static string TrimOrPadLeft(this string str, int length, char pad)
