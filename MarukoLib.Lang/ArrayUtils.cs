@@ -102,12 +102,12 @@ namespace MarukoLib.Lang
             [SuppressMessage("ReSharper", "CompareOfFloatsByEqualityOperator")]
             public DoubleRange(double start, bool includeStart, double end, bool includeEnd, double step)
             {
-                _increment = System.Math.Abs((decimal)step) * ((end > start) ? +1 : -1);
+                _increment = Math.Abs((decimal)step) * ((end > start) ? +1 : -1);
                 if(_increment==0) throw new ArgumentException("'step' cannot be null");
                 _startInclusive =  (decimal)start + (includeStart ? 0M : _increment);
 
                 var endDecimal = (decimal)end;
-                var count = (int) System.Math.Floor(System.Math.Abs(endDecimal - _startInclusive) / System.Math.Abs(_increment)) + 1;
+                var count = (int) Math.Floor(Math.Abs(endDecimal - _startInclusive) / System.Math.Abs(_increment)) + 1;
                 if ((double) (_startInclusive + count * _increment) == end && includeEnd)
                     count++;
                 Count = count;
@@ -133,6 +133,14 @@ namespace MarukoLib.Lang
         }
 
         public static T[] AsArray<T>(this T obj) => new [] { obj };
+
+        public static void Shuffle<T>(this T[] array, Random rnd = null)
+        {
+            rnd = rnd ?? new Random();
+            var n = array.Length;
+            while (n > 1)
+                Swap(array, rnd.Next(n--), n);
+        }
 
         public static T[] Initialize<T>(long size) where T : class, new() => Initialize(size, i => new T());
 
