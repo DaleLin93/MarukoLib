@@ -13,6 +13,8 @@ namespace MarukoLib.Lang
 
         public const StringComparison StrictStrComp= StringComparison.Ordinal;
 
+        public static bool IsNullOrBlank(string str) => str == null || IsBlank(str);
+
         public static bool IsNotEmpty(this string str) => !str.IsEmpty();
 
         public static bool IsEmpty(this string str) => str.Length <= 0;
@@ -21,8 +23,7 @@ namespace MarukoLib.Lang
 
         public static bool IsBlank(this string str)
         {
-            if (str.IsEmpty())
-                return true;
+            if (str.IsEmpty()) return true;
             foreach (var c in str)
                 switch (c)
                 {
@@ -73,11 +74,9 @@ namespace MarukoLib.Lang
             }
         }
 
-        public static string Trim2Null(this string str)
-        {
-            str = str.Trim();
-            return str.IsEmpty() ? null : str;
-        }
+        public static string Trim2Null(this string str) => (str = str.Trim()).IsEmpty() ? null : str;
+
+        public static string Trim2Null(this string str, params char[] chars) => (str = str.Trim(chars)).IsEmpty() ? null : str;
 
         public static bool IsPartlyEqual(this string str, int startIndex, string target, StringComparison comparison = StrictStrComp) =>
             startIndex >= 0 && startIndex <= str.Length - target.Length && string.Compare(str, startIndex, target, 0, target.Length, comparison) == 0;
