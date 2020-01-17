@@ -63,7 +63,7 @@ namespace MarukoLib.Lang
         /// <summary>
         /// Try get value that contained in given context.
         /// </summary>
-        public bool TryGet(IReadonlyContext context, out T result)
+        public bool TryGet([NotNull] IReadonlyContext context, out T result)
         {
             if (!context.TryGet(this, out var resultObj))
             {
@@ -78,17 +78,17 @@ namespace MarukoLib.Lang
         /// Get value that contained in given context or use default value of this property.
         /// </summary>
         /// <exception cref="KeyNotFoundException">This property is not existed in given context, and not available default value for this property.</exception>
-        public T Get(IReadonlyContext context)
+        public T Get([NotNull] IReadonlyContext context)
         {
             if (!context.TryGet(this, out var result))
                 return HasDefaultValue ? DefaultValue : throw new KeyNotFoundException("Cannot found property");
             return (T)result;
         }
 
-        public T GetOrDefault(IReadonlyContext context, T defaultValue = default) =>
+        public T GetOrDefault([NotNull] IReadonlyContext context, T defaultValue = default) =>
             TryGet(context, out var result) ? result : defaultValue;
 
-        public void Set(IContext context, T value) => context.Set(this, value);
+        public void Set([NotNull] IContext context, T value) => context.Set(this, value);
 
         public bool Equals(ContextProperty<T> that) => ReferenceEquals(this, that);
 
@@ -251,7 +251,7 @@ namespace MarukoLib.Lang
         public override void Set(IContextProperty property, object value)
         {
             if (!property.ValueType.IsInstanceOfTypeOrNull(value))
-                throw new ArgumentException("value type mismatched");
+                throw new ArgumentException($"Value type mismatched, expected type: {property.ValueType}, type of given value: {value?.GetType()}");
             _dict[property] = value;
         }
 
