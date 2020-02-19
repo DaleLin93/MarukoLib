@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 
 namespace MarukoLib.Lang
 {
@@ -39,25 +38,10 @@ namespace MarukoLib.Lang
 
         }
 
-        [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-        public static IReadOnlyCollection<T> AsReadonly<T>(this IEnumerable<T> enumerable)
-        {
-            if (enumerable is ICollection<T> collection) return AsReadonly(collection);
-            return AsReadonlyCollection(enumerable, enumerable.Count());
-        }
-
         public static IReadOnlyCollection<T> AsReadonly<T>(this ICollection<T> collection)
         {
             if (collection is IReadOnlyCollection<T> @readonly) return @readonly;
             return new ReadonlyCollection<T>(collection);
-        }
-
-        public static IReadOnlyCollection<T> AsReadonlyCollection<T>(this IEnumerable<T> enumerable, int count) => new ReadonlyCollection<T>(count, enumerable);
-
-        public static TR Collect<T, TR>(this ICollection<T> collection, TR value) where TR : T
-        {
-            collection.Add(value);
-            return value;
         }
 
         public static bool IsNullOrEmpty(ICollection collection) => collection == null || collection.Count == 0;
