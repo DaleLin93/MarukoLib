@@ -44,7 +44,12 @@ namespace MarukoLib.IO
                     File.Move(SrcPath, DstPath);
             }
 
-            public override string ToString() => $"{Path.GetFileName(SrcPath)} => {Path.GetFileName(DstPath)}";
+            public override string ToString()
+            {
+                var src = Path.GetFileName(SrcPath);
+                var dst = Path.GetFileName(DstPath);
+                return IsDirectory ? $"[ {src} ] => [ {dst} ]" : $"{src} => {dst}";
+            }
 
         }
 
@@ -143,24 +148,24 @@ namespace MarukoLib.IO
             return true;
         }
 
-        public static string RemoveInvalidCharsForFileName(string fileName)
+        public static string RemoveInvalidCharsForFileName(string fileName, bool checkValid = false)
         {
             var stringBuilder = new StringBuilder(fileName.Length);
             foreach (var c in fileName)
                 if (!InvalidFileNameChars.Contains(c))
                     stringBuilder.Append(c);
             fileName = stringBuilder.ToString();
-            if (string.IsNullOrWhiteSpace(fileName)) throw new ArgumentException();
+            if (checkValid && string.IsNullOrWhiteSpace(fileName)) throw new ArgumentException();
             return fileName;
         }
 
-        public static string ReplaceInvalidCharsForFileName(string fileName, char replaceWith)
+        public static string ReplaceInvalidCharsForFileName(string fileName, char replaceWith, bool checkValid = false)
         {
             var stringBuilder = new StringBuilder(fileName.Length);
             foreach (var c in fileName)
                 stringBuilder.Append(InvalidFileNameChars.Contains(c) ? replaceWith : c);
             fileName = stringBuilder.ToString();
-            if (string.IsNullOrWhiteSpace(fileName)) throw new ArgumentException();
+            if (checkValid && string.IsNullOrWhiteSpace(fileName)) throw new ArgumentException();
             return fileName;
         }
 
