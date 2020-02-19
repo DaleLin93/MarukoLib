@@ -113,6 +113,7 @@
     <Compile Include="UI\DispatchingUtils.cs" />
     <Compile Include="UI\ScreenInfo.cs" />
     <Compile Include="UI\UIExtensions.cs" />
+    <Compile Include="Windows\MessageBoxUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="JetBrains.Annotations">
