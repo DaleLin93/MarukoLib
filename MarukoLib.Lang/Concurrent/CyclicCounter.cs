@@ -1,6 +1,4 @@
-﻿using System.Threading;
-
-namespace MarukoLib.Lang.Concurrent
+﻿namespace MarukoLib.Lang.Concurrent
 {
 
     public class CyclicCounter

@@ -1,7 +1,14 @@
 ﻿namespace MarukoLib.Lang
 {
 
-    public struct Timestamped<T>
+    public interface ITimestamped
+    {
+
+        long Timestamp { get; }
+
+    }
+
+    public struct Timestamped<T> : ITimestamped
     {
 
         public Timestamped(long t, T v)

@@ -3,9 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using SharpDX.Direct2D1;
-using SharpDX.DXGI;
 using SharpDX.Mathematics.Interop;
-using AlphaMode = SharpDX.Direct2D1.AlphaMode;
 using PixelFormat = SharpDX.Direct2D1.PixelFormat;
 
 namespace MarukoLib.DirectX

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using JetBrains.Annotations;
 using MarukoLib.Lang.Concurrent;
 using MarukoLib.Lang.Exceptions;
@@ -16,14 +17,14 @@ namespace MarukoLib.Lang
 
         ~DisposablePool() => DisposeAll();
 
-        public bool AddIfDisposable(object obj) 
+        public bool AddIfDisposable(object obj)
         {
             if (!(obj is IDisposable disposable)) return false;
             Add(disposable);
             return true;
         }
 
-        public void Add(IDisposable disposable) 
+        public void Add(IDisposable disposable)
         {
             if (_disposed.Value) throw new StateException("DisposablePool is already disposed.");
             lock (_disposables) _disposables.AddFirst(disposable);
@@ -56,7 +57,7 @@ namespace MarukoLib.Lang
 
             [NotNull] public Action<T> DisposalAction { get; }
 
-            protected override void DoDisposition() => DisposalAction(Value);
+            protected override void Dispose(bool deconstruct) => DisposalAction(Value);
 
         }
 
@@ -65,29 +66,31 @@ namespace MarukoLib.Lang
 
             public NoAction(T value) : base(value) { }
 
-            protected override void DoDisposition() { }
+            protected override void Dispose(bool deconstruct) { }
 
         }
 
-        private bool _disposedValue = false;
+        private bool _disposed = false;
 
         protected Disposable(T value) => Value = value;
 
-        ~Disposable() => Dispose();
+        ~Disposable() => Dispose0(true);
 
         [NotNull] public T Value { get; }
 
-        public void Dispose()
+        public void Dispose() => Dispose0(false);
+
+        protected abstract void Dispose(bool deconstruct);
+
+        private void Dispose0(bool deconstruct)
         {
             lock (this)
-                if (!_disposedValue)
+                if (!_disposed)
                 {
-                    DoDisposition();
-                    _disposedValue = true;
+                    Dispose(deconstruct);
+                    _disposed = true;
                 }
         }
-
-        protected abstract void DoDisposition();
 
     }
 

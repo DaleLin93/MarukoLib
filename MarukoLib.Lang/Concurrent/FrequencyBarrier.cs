@@ -11,16 +11,16 @@ namespace MarukoLib.Lang.Concurrent
 
             private readonly object _sync = new object();
 
-            private readonly Clock _clock;
+            private readonly IClock _clock;
 
             private readonly long _minimumInterval;
 
             private long? _last;
 
-            public MinimumInterval(Clock clock, TimeSpan timeSpan)
+            public MinimumInterval(IClock clock, TimeSpan timeSpan)
                 : this(clock, TimeUnit.Tick.ConvertTo(timeSpan.Ticks, clock.Unit)) { }
 
-            public MinimumInterval(Clock clock, long minimumInterval)
+            public MinimumInterval(IClock clock, long minimumInterval)
             {
                 _clock = clock;
                 _minimumInterval = minimumInterval;

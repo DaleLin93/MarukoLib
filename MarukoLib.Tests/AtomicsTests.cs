@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using MarukoLib.Lang.Concurrent;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
