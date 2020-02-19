@@ -183,5 +183,77 @@ namespace MarukoLib.IO
 
         public static int WriteDoubleAsNetworkOrder(this byte[] bytes, double value, int startIndex = 0) => WriteDouble(bytes, value, NetworkOrder, startIndex);
 
+        public static byte[] GetBytes(this short value, Endianness byteOrder)
+        {
+            var bytes = BitConverter.GetBytes(value);
+            if (SystemByteOrder != byteOrder) bytes.Reverse();
+            return bytes;
+        }
+
+        public static byte[] GetBytes(this ushort value, Endianness byteOrder)
+        {
+            var bytes = BitConverter.GetBytes(value);
+            if (SystemByteOrder != byteOrder) bytes.Reverse();
+            return bytes;
+        }
+
+        public static byte[] GetBytes(this int value, Endianness byteOrder)
+        {
+            var bytes = BitConverter.GetBytes(value);
+            if (SystemByteOrder != byteOrder) bytes.Reverse();
+            return bytes;
+        }
+
+        public static byte[] GetBytes(this uint value, Endianness byteOrder)
+        {
+            var bytes = BitConverter.GetBytes(value);
+            if (SystemByteOrder != byteOrder) bytes.Reverse();
+            return bytes;
+        }
+
+        public static byte[] GetBytes(this long value, Endianness byteOrder)
+        {
+            var bytes = BitConverter.GetBytes(value);
+            if (SystemByteOrder != byteOrder) bytes.Reverse();
+            return bytes;
+        }
+
+        public static byte[] GetBytes(this ulong value, Endianness byteOrder)
+        {
+            var bytes = BitConverter.GetBytes(value);
+            if (SystemByteOrder != byteOrder) bytes.Reverse();
+            return bytes;
+        }
+
+        public static byte[] GetBytes(this float value, Endianness byteOrder)
+        {
+            var bytes = BitConverter.GetBytes(value);
+            if (SystemByteOrder != byteOrder) bytes.Reverse();
+            return bytes;
+        }
+
+        public static byte[] GetBytes(this double value, Endianness byteOrder)
+        {
+            var bytes = BitConverter.GetBytes(value);
+            if (SystemByteOrder != byteOrder) bytes.Reverse();
+            return bytes;
+        }
+
+        public static byte[] GetBytesInNetworkOrder(this short value) => GetBytes(value, NetworkOrder);
+
+        public static byte[] GetBytesInNetworkOrder(this ushort value) => GetBytes(value, NetworkOrder);
+
+        public static byte[] GetBytesInNetworkOrder(this int value) => GetBytes(value, NetworkOrder);
+
+        public static byte[] GetBytesInNetworkOrder(this uint value) => GetBytes(value, NetworkOrder);
+
+        public static byte[] GetBytesInNetworkOrder(this long value) => GetBytes(value, NetworkOrder);
+
+        public static byte[] GetBytesInNetworkOrder(this ulong value) => GetBytes(value, NetworkOrder);
+
+        public static byte[] GetBytesInNetworkOrder(this float value) => GetBytes(value, NetworkOrder);
+
+        public static byte[] GetBytesInNetworkOrder(this double value) => GetBytes(value, NetworkOrder);
+
     }
 }
