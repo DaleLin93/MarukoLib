@@ -8,11 +8,11 @@ namespace MarukoLib.Lang
 
         public static readonly Action NoOp = () => { };
 
-        public static void SafelyInvoke(this Action action, Action<Exception> exceptionConsumer = null) => SafelyInvoke<Exception>(action, exceptionConsumer);
+        public static void InvokeQuietly(this Action action, Action<Exception> exceptionConsumer = null) => InvokeQuietly<Exception>(action, exceptionConsumer);
 
-        public static void SafelyInvoke<T>(this Action action, Action<T> exceptionConsumer = null) where T : Exception
+        public static void InvokeQuietly<TEx>(this Action action, Action<TEx> exceptionConsumer = null) where TEx : Exception
         {
-            try { action.Invoke(); } catch (T e) { exceptionConsumer?.Invoke(e); }
+            try { action.Invoke(); } catch (TEx e) { exceptionConsumer?.Invoke(e); }
         }
 
     }
