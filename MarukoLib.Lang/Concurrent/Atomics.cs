@@ -39,6 +39,41 @@ namespace MarukoLib.Lang.Concurrent
 
     }
 
+    public sealed class AtomicEnum<T> : IAtomic<T> where T : Enum 
+    {
+
+        private readonly Atomic<object> _value = new Atomic<object>();
+
+        public AtomicEnum(T defaultValue) => DefaultValue = defaultValue;
+
+        public T DefaultValue { get; }
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public T Get() => Cast(_value.Get());
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public T Set(T value) => Cast(_value.Set(value));
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public bool CompareAndSet(T oldValue, T newValue) => _value.CompareAndSet(oldValue, newValue);
+
+        public void Compute(UnaryOperator<T> @operator, out T oldValue, out T newValue)
+        {
+            _value.Compute(e => @operator(Cast(e)), out var old, out var @new);
+            oldValue = Cast(old);
+            newValue = Cast(@new);
+        }
+
+        private T Cast(object obj) => (obj is T t) ? t : DefaultValue;
+
+    }
+
     public abstract class AbstractAtomic<T> : IAtomic<T>, IContainer, IContainer<T>
     {
 
@@ -381,7 +416,7 @@ namespace MarukoLib.Lang.Concurrent
         }
 
     }
-
+    
     public sealed class AtomicPtr : AbstractAtomic<IntPtr>
     {
 
