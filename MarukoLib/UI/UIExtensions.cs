@@ -20,6 +20,11 @@ namespace MarukoLib.UI
             return transformMatrix?.M11 ?? 1;
         }
 
+        public static bool IsChecked(this ToggleButton toggleButton, bool defaultVal = false) => toggleButton?.IsChecked ?? defaultVal;
+
+        public static bool FindAndSelectFirst<T>(this Selector selector, Func<T, object> extractFunc, object targetValue, int? defaultIndex = null)
+            => FindAndSelectFirst(selector, item => item is T t && Equals(extractFunc(t), targetValue), defaultIndex);
+
         public static bool FindAndSelectFirst(this Selector selector, Predicate<object> predicate, int? defaultIndex = null)
         {
             if (predicate != null)
