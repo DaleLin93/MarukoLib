@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace MarukoLib.Interop
 {
@@ -9,42 +10,42 @@ namespace MarukoLib.Interop
 
         public static CoTaskArray<byte> Of(byte[] array)
         {
-            var coTaskArray = CoTaskArray<byte>.Alloc(array.Length);
+            var coTaskArray = new CoTaskArray<byte>(array.Length);
             Marshal.Copy(array, 0, coTaskArray.Ptr, array.Length);
             return coTaskArray;
         }
 
         public static CoTaskArray<short> Of(short[] array)
         {
-            var coTaskArray = CoTaskArray<short>.Alloc(array.Length);
+            var coTaskArray = new CoTaskArray<short>(array.Length);
             Marshal.Copy(array, 0, coTaskArray.Ptr, array.Length);
             return coTaskArray;
         }
 
         public static CoTaskArray<int> Of(int[] array) 
         {
-            var coTaskArray = CoTaskArray<int>.Alloc(array.Length);
+            var coTaskArray = new CoTaskArray<int>(array.Length);
             Marshal.Copy(array, 0, coTaskArray.Ptr, array.Length);
             return coTaskArray;
         }
 
         public static CoTaskArray<long> Of(long[] array)
         {
-            var coTaskArray = CoTaskArray<long>.Alloc(array.Length);
+            var coTaskArray = new CoTaskArray<long>(array.Length);
             Marshal.Copy(array, 0, coTaskArray.Ptr, array.Length);
             return coTaskArray;
         }
 
         public static CoTaskArray<float> Of(float[] array)
         {
-            var coTaskArray = CoTaskArray<float>.Alloc(array.Length);
+            var coTaskArray = new CoTaskArray<float>(array.Length);
             Marshal.Copy(array, 0, coTaskArray.Ptr, array.Length);
             return coTaskArray;
         }
 
         public static CoTaskArray<double> Of(double[] array)
         {
-            var coTaskArray = CoTaskArray<double>.Alloc(array.Length);
+            var coTaskArray = new CoTaskArray<double>(array.Length);
             Marshal.Copy(array, 0, coTaskArray.Ptr, array.Length);
             return coTaskArray;
         }
@@ -58,24 +59,31 @@ namespace MarukoLib.Interop
 
         private readonly bool _autoRelease;
 
+        private IntPtr _ptr;
+
+        public CoTaskArray(int length, bool autoRelease = true) : this(Marshal.AllocCoTaskMem(length * ElementSize), length, autoRelease) { }
+
         public CoTaskArray(IntPtr ptr, int length, bool autoRelease = false)
         {
-            Ptr = ptr;
+            _ptr = ptr;
             Length = length;
             _autoRelease = autoRelease;
         }
 
-        public static CoTaskArray<T> Alloc(int len) => new CoTaskArray<T>(Marshal.AllocCoTaskMem(len * ElementSize), len, true);
+        ~CoTaskArray() => Dispose();
 
-        public IntPtr Ptr { get; private set; }
+        public IntPtr Ptr => Interlocked.CompareExchange(ref _ptr, IntPtr.Zero, IntPtr.Zero);
+
+        public bool IsReleased => Ptr == IntPtr.Zero;
 
         public int Length { get; }
 
         public void Dispose()
         {
-            if (!_autoRelease || Ptr == IntPtr.Zero) return;
+            if (!_autoRelease) return;
+            var ptr = Interlocked.Exchange(ref _ptr, IntPtr.Zero);
+            if (ptr == IntPtr.Zero) return;
             Marshal.FreeCoTaskMem(Ptr);
-            Ptr = IntPtr.Zero;
         }
 
     }

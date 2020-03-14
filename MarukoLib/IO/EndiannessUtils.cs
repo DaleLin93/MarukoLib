@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 using MarukoLib.Lang;
 
 namespace MarukoLib.IO
@@ -17,6 +19,10 @@ namespace MarukoLib.IO
 
         public static readonly Endianness SystemByteOrder = BitConverter.IsLittleEndian ? Endianness.LittleEndian : Endianness.BigEndian;
 
+        private static readonly ThreadLocal<byte[]>[] BufferThreadLocals = new ThreadLocal<byte[]>[sizeof(long)];
+
+        private static readonly ReaderWriterLockSlim BufferLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
+
         public static byte InvertBits(this byte b) => (byte)~b;
 
         public static byte ReverseBits(this byte b)
@@ -27,73 +33,21 @@ namespace MarukoLib.IO
             return b;
         }
 
-        public static short ReadInt16(this byte[] bytes, Endianness byteOrder, int startIndex = 0)
-        {
-            if (SystemByteOrder == byteOrder) return BitConverter.ToInt16(bytes, startIndex);
-            var valueBytes = new[] { bytes[startIndex + 1], bytes[startIndex + 0] };
-            return BitConverter.ToInt16(valueBytes, 0);
-        }
+        public static short ReadInt16(this byte[] bytes, Endianness byteOrder, int startIndex = 0) => Read(bytes, byteOrder, startIndex, sizeof(short), BitConverter.ToInt16);
 
-        public static ushort ReadUInt16(this byte[] bytes, Endianness byteOrder, int startIndex = 0)
-        {
-            if (SystemByteOrder == byteOrder) return BitConverter.ToUInt16(bytes, startIndex);
-            var valueBytes = new[] { bytes[startIndex + 1], bytes[startIndex + 0] };
-            return BitConverter.ToUInt16(valueBytes, 0);
-        }
+        public static ushort ReadUInt16(this byte[] bytes, Endianness byteOrder, int startIndex = 0) => Read(bytes, byteOrder, startIndex, sizeof(ushort), BitConverter.ToUInt16);
 
-        public static int ReadInt32(this byte[] bytes, Endianness byteOrder, int startIndex = 0)
-        {
-            if (SystemByteOrder == byteOrder) return BitConverter.ToInt32(bytes, startIndex);
-            var valueBytes = new[] { bytes[startIndex + 3], bytes[startIndex + 2], bytes[startIndex + 1], bytes[startIndex + 0] };
-            return BitConverter.ToInt32(valueBytes, 0);
-        }
+        public static int ReadInt32(this byte[] bytes, Endianness byteOrder, int startIndex = 0) => Read(bytes, byteOrder, startIndex, sizeof(int), BitConverter.ToInt32);
 
-        public static uint ReadUInt32(this byte[] bytes, Endianness byteOrder, int startIndex = 0)
-        {
-            if (SystemByteOrder == byteOrder) return BitConverter.ToUInt32(bytes, startIndex);
-            var valueBytes = new[] { bytes[startIndex + 3], bytes[startIndex + 2], bytes[startIndex + 1], bytes[startIndex + 0] };
-            return BitConverter.ToUInt32(valueBytes, 0);
-        }
+        public static uint ReadUInt32(this byte[] bytes, Endianness byteOrder, int startIndex = 0) => Read(bytes, byteOrder, startIndex, sizeof(uint), BitConverter.ToUInt32);
 
-        public static long ReadInt64(this byte[] bytes, Endianness byteOrder, int startIndex = 0)
-        {
-            if (SystemByteOrder == byteOrder) return BitConverter.ToInt64(bytes, startIndex);
-            var valueBytes = new[]
-            {
-                bytes[startIndex + 7], bytes[startIndex + 6], bytes[startIndex + 5], bytes[startIndex + 4],
-                bytes[startIndex + 3], bytes[startIndex + 2], bytes[startIndex + 1], bytes[startIndex + 0],
-            };
-            return BitConverter.ToInt64(valueBytes, 0);
-        }
+        public static long ReadInt64(this byte[] bytes, Endianness byteOrder, int startIndex = 0) => Read(bytes, byteOrder, startIndex, sizeof(long), BitConverter.ToInt64);
 
-        public static ulong ReadUInt64(this byte[] bytes, Endianness byteOrder, int startIndex = 0)
-        {
-            if (SystemByteOrder == byteOrder) return BitConverter.ToUInt64(bytes, startIndex);
-            var valueBytes = new[]
-            {
-                bytes[startIndex + 7], bytes[startIndex + 6], bytes[startIndex + 5], bytes[startIndex + 4],
-                bytes[startIndex + 3], bytes[startIndex + 2], bytes[startIndex + 1], bytes[startIndex + 0],
-            };
-            return BitConverter.ToUInt64(valueBytes, 0);
-        }
+        public static ulong ReadUInt64(this byte[] bytes, Endianness byteOrder, int startIndex = 0) => Read(bytes, byteOrder, startIndex, sizeof(ulong), BitConverter.ToUInt64);
 
-        public static float ReadSingle(this byte[] bytes, Endianness byteOrder, int startIndex = 0)
-        {
-            if (SystemByteOrder == byteOrder) return BitConverter.ToSingle(bytes, startIndex);
-            var valueBytes = new[] { bytes[startIndex + 3], bytes[startIndex + 2], bytes[startIndex + 1], bytes[startIndex + 0] };
-            return BitConverter.ToSingle(valueBytes, 0);
-        }
+        public static float ReadSingle(this byte[] bytes, Endianness byteOrder, int startIndex = 0) => Read(bytes, byteOrder, startIndex, sizeof(float), BitConverter.ToSingle);
 
-        public static double ReadDouble(this byte[] bytes, Endianness byteOrder, int startIndex = 0)
-        {
-            if (SystemByteOrder == byteOrder) return BitConverter.ToDouble(bytes, startIndex);
-            var valueBytes = new[]
-            {
-                bytes[startIndex + 7], bytes[startIndex + 6], bytes[startIndex + 5], bytes[startIndex + 4],
-                bytes[startIndex + 3], bytes[startIndex + 2], bytes[startIndex + 1], bytes[startIndex + 0],
-            };
-            return BitConverter.ToDouble(valueBytes, 0);
-        }
+        public static double ReadDouble(this byte[] bytes, Endianness byteOrder, int startIndex = 0) => Read(bytes, byteOrder, startIndex, sizeof(double), BitConverter.ToDouble);
 
         public static short ReadInt16FromNetworkOrder(this byte[] bytes, int startIndex = 0) => ReadInt16(bytes, NetworkOrder, startIndex);
 
@@ -254,6 +208,46 @@ namespace MarukoLib.IO
         public static byte[] GetBytesInNetworkOrder(this float value) => GetBytes(value, NetworkOrder);
 
         public static byte[] GetBytesInNetworkOrder(this double value) => GetBytes(value, NetworkOrder);
+
+        private static byte[] GetBuffer(int size)
+        {
+            ThreadLocal<byte[]> threadLocal;
+            BufferLock.EnterUpgradeableReadLock();
+            try
+            {
+                threadLocal = BufferThreadLocals[size - 1];
+                if (threadLocal == null)
+                {
+                    BufferLock.EnterWriteLock();
+                    BufferThreadLocals[size - 1] = threadLocal = new ThreadLocal<byte[]>(() => new byte[size]);
+                }
+            }
+            finally
+            {
+                BufferLock.ExitUpgradeableReadLock();
+            }
+            return threadLocal.Value;
+        }
+
+        private static void ReversedCopy(IReadOnlyList<byte> src, int srcStartIndex, IList<byte> dst, int dstStartIndex, int count)
+        {
+            var srcIndex = srcStartIndex + count - 1;
+            var dstIndex = dstStartIndex;
+            for (var i = 0; i < count; i++)
+            {
+                dst[dstIndex] = src[srcIndex];
+                srcIndex--;
+                dstIndex++;
+            }
+        }
+
+        private static T Read<T>(byte[] bytes, Endianness byteOrder, int startIndex, int size, Func<byte[], int, T> func) where T : struct
+        {
+            if (SystemByteOrder == byteOrder) return func(bytes, startIndex);
+            var valueBytes = GetBuffer(size);
+            ReversedCopy(bytes, startIndex, valueBytes, 0, size);
+            return func(valueBytes, 0);
+        }
 
     }
 }
