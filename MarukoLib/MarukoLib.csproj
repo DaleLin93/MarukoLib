@@ -99,7 +99,7 @@
     <Compile Include="UI\CursorUtils.cs" />
     <Compile Include="Crypt\Base64Utils.cs" />
     <Compile Include="UI\ColorUtils.cs" />
-    <Compile Include="IO\CompressUtils.cs" />
+    <Compile Include="IO\GZipUtils.cs" />
     <Compile Include="Net\CookieUtils.cs" />
     <Compile Include="IO\FileUtils.cs" />
     <Compile Include="UI\GraphicsUtils.cs" />
