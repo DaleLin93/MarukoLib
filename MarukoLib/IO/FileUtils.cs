@@ -3,6 +3,7 @@ using MarukoLib.Lang;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace MarukoLib.IO
@@ -28,6 +29,20 @@ namespace MarukoLib.IO
                 IsDirectory = directory;
                 SrcPath = NormalizePath(srcPath);
                 DstPath = NormalizePath(dstPath);
+            }
+
+            public RenamePair(string srcPath, string dstPath)
+            {
+                SrcPath = NormalizePath(srcPath);
+                DstPath = NormalizePath(dstPath);
+                IsDirectory = CheckIsDirectory(srcPath);
+            }
+
+            public static bool CheckIsDirectory(string path)
+            {
+                if (Directory.Exists(path)) return true;
+                if (File.Exists(path)) return false;
+                throw new Exception($"Given path is not a file or a directory: '{path}'");
             }
 
             public bool IsDirectory { get; }
@@ -69,7 +84,7 @@ namespace MarukoLib.IO
         }
 
         /// <summary>
-        /// Virual file system with state cache.
+        /// Virtual file system with state cache.
         /// </summary>
         internal class VirtualFileSystem
         {
@@ -114,7 +129,7 @@ namespace MarukoLib.IO
 
         }
 
-        public const string AllFileFilter = "All Files (*.*)|*.*";
+        public const string AllFileFilterPattern = "All Files (*.*)|*.*";
 
         private static readonly ISet<char> InvalidFileNameChars;
 
@@ -131,7 +146,7 @@ namespace MarukoLib.IO
 
         public static string NormalizePath(string path) => Path.GetFullPath(path);
 
-        public static string GetFileFilter([CanBeNull] string desc, [CanBeNull] string ext)
+        public static string GetFileFilterPattern([CanBeNull] string desc, [CanBeNull] string ext)
         {
             ext = ext?.Trim();
             if (string.IsNullOrEmpty(ext)) ext = ".*";
@@ -139,21 +154,14 @@ namespace MarukoLib.IO
             return string.IsNullOrWhiteSpace(desc) ? $"*{ext}|*{ext}" : $"{desc} (*{ext})|*{ext}";
         }
 
-        public static bool IsValidFileName([CanBeNull] string fileName)
-        {
-            if (string.IsNullOrWhiteSpace(fileName)) return false; 
-            foreach (var c in fileName)
-                if (!InvalidFileNameChars.Contains(c))
-                    return false;
-            return true;
-        }
+        public static bool IsValidFileName([CanBeNull] string fileName) 
+            => !string.IsNullOrWhiteSpace(fileName) && fileName.All(c => InvalidFileNameChars.Contains(c));
 
         public static string RemoveInvalidCharsForFileName(string fileName, bool checkValid = false)
         {
             var stringBuilder = new StringBuilder(fileName.Length);
-            foreach (var c in fileName)
-                if (!InvalidFileNameChars.Contains(c))
-                    stringBuilder.Append(c);
+            foreach (var c in fileName.Where(c => !InvalidFileNameChars.Contains(c)))
+                stringBuilder.Append(c);
             fileName = stringBuilder.ToString();
             if (checkValid && string.IsNullOrWhiteSpace(fileName)) throw new ArgumentException();
             return fileName;
@@ -169,18 +177,30 @@ namespace MarukoLib.IO
             return fileName;
         }
 
-        public static void Rename(out IReadOnlyCollection<RenameFailure> failures, [ItemNotNull] params RenamePair[] input)
-            => Rename(input, out failures);
-
-        public static void Rename([NotNull, ItemNotNull] IEnumerable<RenamePair> input, 
-            [NotNull, ItemNotNull] out IReadOnlyCollection<RenameFailure> renameFailures)
+        /// <summary>
+        /// Rename multiple files or directories.
+        /// </summary>
+        /// <param name="paths">Param layout: [src path 0, dst path 0, src path 1, dst path 1, ...].</param>
+        /// <returns>Failures of renaming.</returns>
+        public static IReadOnlyCollection<RenameFailure> Rename(params string[] paths)
         {
-            renameFailures = EmptyArray<RenameFailure>.Instance;
+            if (paths.Length % 2 != 0) throw new Exception("The input paths must be paired");
+            var list = new List<RenamePair>(paths.Length / 2);
+            for (var i = 0; i < paths.Length; i+=2)
+                list.Add(new RenamePair(paths[i], paths[i + 1]));
+            return Rename(list);
+        }
 
+        /// <summary>
+        /// Rename multiple files or directories.
+        /// </summary>
+        /// <param name="input">Rename pairs.</param>
+        /// <returns>Failures of renaming.</returns>
+        public static IReadOnlyCollection<RenameFailure> Rename([NotNull, ItemNotNull] IEnumerable<RenamePair> input)
+        {
             /* Preconditions */
             var items = new LinkedList<RenamePair>(input);
-            if (items.Count <= 0) return;
-
+            if (items.Count <= 0) return EmptyArray<RenameFailure>.Instance;
 
             /* Checking conflicts */
             var vfs = new VirtualFileSystem();
@@ -194,7 +214,7 @@ namespace MarukoLib.IO
                     if (!srcSet.Add(item.SrcPath)) throw new Exception($"File '{item.SrcPath}' will be renamed multiple times!");
                     if (!dstSet.Add(item.DstPath)) throw new Exception($"Multiple files will be renamed to '{item.DstPath}'!");
                 }
-                /* Check conflicts with unaffacted files */
+                /* Check conflicts with unaffected files */
                 foreach (var item in items)
                 {
                     if (!vfs.IsSrcExists(item) && !dstSet.Contains(item.SrcPath))
@@ -232,16 +252,16 @@ namespace MarukoLib.IO
                     }
                     while (changed && items.Count > 0);
 
-                    /* Process remaining remaining items (renaming loops) */
+                    /* Process remaining items, break loops */
                     if (items.Count > 0)
                     {
                         var item = items.First.Value;
                         var srcParent = Path.GetDirectoryName(item.SrcPath);
+                        System.Diagnostics.Debug.Assert(srcParent != null); // Parent directory must be non-null after path normalization.
                         string intermediatePath;
                         do
                         {
-                            var intermediateName = RemoveInvalidCharsForFileName(Guid.NewGuid() + ".imp");
-                            intermediatePath = NormalizePath(Path.Combine(srcParent, intermediateName));
+                            intermediatePath = NormalizePath(Path.Combine(srcParent, RemoveInvalidCharsForFileName(Guid.NewGuid() + ".imp")));
                         }
                         while (!vfs.Rename(item.SrcPath, intermediatePath));
                         sortedItems.Add(new RenamePair(item.SrcPath, intermediatePath, item.IsDirectory));
@@ -265,7 +285,7 @@ namespace MarukoLib.IO
                 {
                     failures.AddLast(new RenameFailure(item, ex));
                 }
-            renameFailures = failures.AsReadonly();
+            return failures.AsReadonly();
         }
 
     }

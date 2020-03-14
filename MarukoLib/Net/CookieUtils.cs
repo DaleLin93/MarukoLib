@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
+using JetBrains.Annotations;
 
 namespace MarukoLib.Net
 {
@@ -8,10 +10,10 @@ namespace MarukoLib.Net
     {
 
         /// <summary>
-        /// 获取指定指定cookie的值
+        /// Try to get the first value for specific cookie key.
         /// </summary>
         /// <returns></returns>
-        public static bool TryGetCookieValue(CookieContainer container, Uri uri, string key, out string value)
+        public static bool TryGetFirstCookie([NotNull] this CookieContainer container, [NotNull] Uri uri, [NotNull] string key, out string value)
         {
             foreach (Cookie cookie in container.GetCookies(uri))
                 if (key.Equals(cookie.Name))
@@ -21,6 +23,19 @@ namespace MarukoLib.Net
                 }
             value = null;
             return false;
+        }
+
+        /// <summary>
+        /// Try to get the first value for specific cookie key.
+        /// </summary>
+        /// <returns></returns>
+        public static ICollection<string> GetCookies([NotNull] this CookieContainer container, [NotNull] Uri uri, [NotNull] string key)
+        {
+            var list = new LinkedList<string>();
+            foreach (Cookie cookie in container.GetCookies(uri))
+                if (key.Equals(cookie.Name))
+                    list.AddLast(cookie.Value);
+            return list;
         }
 
     }

@@ -147,7 +147,7 @@ namespace MarukoLib.Lang
 
         public static bool TrySync(IClock clock, Func<TimeUnit, long> remoteTimeSupplier, TimeSpan syncWithin, int maxRetryCount, out SyncedClock synced)
         {
-            for (int i = maxRetryCount - 1; i >= 0; i--)
+            for (var i = maxRetryCount - 1; i >= 0; i--)
             {
                 var startTicks = clock.GetTicks();
                 var remoteTime = remoteTimeSupplier(clock.Unit);
