@@ -66,6 +66,8 @@
     <Compile Include="Exceptions\ProgrammingException.cs" />
     <Compile Include="Exceptions\StateException.cs" />
     <Compile Include="Exceptions\UserException.cs" />
+    <Compile Include="Filters\EWMAFilter.cs" />
+    <Compile Include="Filters\Filter.cs" />
     <Compile Include="Functions.cs" />
     <Compile Include="MatrixQuery.cs" />
     <Compile Include="MatrixUtils.cs" />
