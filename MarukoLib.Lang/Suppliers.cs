@@ -30,8 +30,9 @@ namespace MarukoLib.Lang
                 var now = DateTimeUtils.CurrentTimeTicks;
                 if (flag && now < timestamp + expiration.Ticks) return value;
                 flag = true;
+                value = supplier();
                 timestamp = now;
-                return value = supplier();
+                return value;
             };
         }
 
