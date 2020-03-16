@@ -32,7 +32,7 @@ namespace MarukoLib.Tests
         [TestMethod]
         public void TestAtomicBool()
         {
-            var atomicBool = new AtomicBool(false);
+            var atomicBool = Atomics.Bool(false);
             Assert.IsFalse(atomicBool.Reset());
             Assert.IsTrue(atomicBool.Set());
             Assert.IsFalse(atomicBool.Set());
@@ -45,7 +45,7 @@ namespace MarukoLib.Tests
         [TestMethod]
         public void TestAtomicInt()
         {
-            var atomicInt = new AtomicInt(0);
+            var atomicInt = Atomics.Int(0);
             Assert.AreEqual(0, atomicInt.Get());
             Assert.AreEqual(1, atomicInt.IncrementAndGet());
             Assert.AreEqual(1, atomicInt.GetAndIncrement());
@@ -57,7 +57,7 @@ namespace MarukoLib.Tests
             Assert.AreEqual(5, atomicInt.Set(10));
             Assert.AreEqual(10, atomicInt.Get());
 
-            atomicInt = new AtomicInt(100);
+            atomicInt = Atomics.Int(100);
 
             const int threadNum = 4;
             const int loopCount = 100;
@@ -78,7 +78,7 @@ namespace MarukoLib.Tests
         [TestMethod]
         public void TestAtomicRef()
         {
-            var atomicRef = new AtomicReference<A>();
+            var atomicRef = Atomics.Reference<A>();
             Assert.AreEqual(null, atomicRef.Reference);
             Assert.AreEqual(null, atomicRef.Set(new A(1)));
             Assert.AreEqual(new A(1), atomicRef.Reference);
@@ -91,7 +91,7 @@ namespace MarukoLib.Tests
         [TestMethod]
         public void TestAtomicEnum()
         {
-            var atomicEnum = new AtomicEnum<EventResetMode>(EventResetMode.ManualReset);
+            var atomicEnum = Atomics.Enum(EventResetMode.ManualReset);
             Assert.AreEqual(EventResetMode.ManualReset, atomicEnum.Get());
             Assert.IsFalse(atomicEnum.CompareAndSet(EventResetMode.AutoReset, EventResetMode.ManualReset));
             Assert.AreEqual(EventResetMode.ManualReset, atomicEnum.Get());
@@ -104,7 +104,7 @@ namespace MarukoLib.Tests
         [TestMethod]
         public void TestAtomicStruct()
         {
-            var atomicStruct = new Atomic<Point>(new Point(1, 2));
+            var atomicStruct = Atomics.Heavy(new Point(1, 2));
             Assert.AreNotEqual(new Point(2, 1), atomicStruct.Get());
             Assert.AreEqual(new Point(1, 2), atomicStruct.Get());
             Assert.IsFalse(atomicStruct.CompareAndSet(new Point(2, 1), new Point(2, 2)));

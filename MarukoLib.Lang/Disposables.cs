@@ -10,7 +10,7 @@ namespace MarukoLib.Lang
     public sealed class DisposablePool : IDisposable
     {
 
-        private readonly AtomicBool _disposed = new AtomicBool(false);
+        private readonly AtomicBool _disposed = Atomics.Bool(false);
 
         private readonly LinkedList<IDisposable> _disposables = new LinkedList<IDisposable>();
 
@@ -64,7 +64,7 @@ namespace MarukoLib.Lang
 
         private readonly bool _autoDisposable;
 
-        private readonly AtomicBool _disposed = new AtomicBool(false);
+        private readonly AtomicBool _disposed = Atomics.Bool(false);
 
         public DelegatedDisposable([NotNull] Action @delegate, bool autoDisposable = true)
         {

@@ -14,7 +14,7 @@ namespace MarukoLib.Lang
 
             private const int InitialState = 0, GrabbedState = 1, ReleasedState = 2;
 
-            private readonly AtomicInt _state = new AtomicInt(InitialState);
+            private readonly AtomicInt _state = Atomics.Int(InitialState);
 
             private readonly Action _grabAction, _releaseAction;
 

@@ -41,31 +41,31 @@ namespace MarukoLib.Lang
         object IContainer.Value => Value;
 
     }
-
+    
     public sealed class Memoized<T> : IContainer, IContainer<T>
     {
 
-        private readonly Func<T> _supplier;
+        private readonly Supplier<T> _supplier;
 
         private readonly Clock _clock;
 
         private readonly uint? _expiration;
 
-        private T _value = default;
+        private T _value;
 
-        private long? _valueTimestamp = null;
+        private long? _valueTimestamp;
 
-        public Memoized([NotNull] Func<T> supplier)
+        public Memoized([NotNull] Supplier<T> supplier)
         {
             _supplier = supplier ?? throw new ArgumentNullException(nameof(supplier));
             _clock = null;
             _expiration = null;
         }
 
-        public Memoized([NotNull] Func<T> supplier, [NotNull] Clock clock, TimeSpan timeSpan) 
+        public Memoized([NotNull] Supplier<T> supplier, [NotNull] Clock clock, TimeSpan timeSpan) 
             : this(supplier, clock, (uint) TimeUnit.Tick.ConvertTo(timeSpan.Ticks, clock.Unit)) { }
 
-        public Memoized([NotNull] Func<T> supplier, [NotNull] Clock clock, uint expiration)
+        public Memoized([NotNull] Supplier<T> supplier, [NotNull] Clock clock, uint expiration)
         {
             _supplier = supplier ?? throw new ArgumentNullException(nameof(supplier));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));

@@ -35,7 +35,7 @@ namespace MarukoLib.Threading
 
         private static readonly Logger Logger = Logger.GetLogger(typeof(AsyncCyclicExecutor));
 
-        internal static readonly AtomicLong InstanceId = new AtomicLong();
+        internal static readonly AtomicLong InstanceId = Atomics.Long();
 
         public event EventHandler<TaskExceptionEventArgs> UnhandledException;
 
@@ -59,7 +59,7 @@ namespace MarukoLib.Threading
 
         private readonly Semaphore _mutex = new Semaphore(1, 1);
 
-        private readonly AtomicBool _stopped = new AtomicBool(true);
+        private readonly AtomicBool _stopped = Atomics.Bool(true);
 
         private Thread _thread;
 

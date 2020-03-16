@@ -692,7 +692,7 @@ namespace MarukoLib.Lang.Concurrent
 
         public static AtomicReference<T> Reference<T>(T defaultValue = default) where T : class => new AtomicReference<T>(defaultValue);
 
-        public static Atomic<T> Heavy<T>(T defaultValue = default) where T : class => new Atomic<T>(defaultValue);
+        public static Atomic<T> Heavy<T>(T defaultValue = default) => new Atomic<T>(defaultValue);
 
     }
 

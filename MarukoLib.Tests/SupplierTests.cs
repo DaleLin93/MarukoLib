@@ -14,7 +14,7 @@ namespace MarukoLib.Tests
         [TestMethod]
         public void Test()
         {
-            var atomicInt = new AtomicInt();
+            var atomicInt = Atomics.Int();
             Supplier<int> baseSupplier = () => atomicInt.IncrementAndGet();
 
             var memoizingSupplier = baseSupplier.Memoize();
