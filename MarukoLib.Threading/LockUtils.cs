@@ -4,26 +4,28 @@ using MarukoLib.Lang;
 
 namespace MarukoLib.Threading
 {
+
     public static class LockUtils
     {
 
         public static IDisposable AcquireReadLock(this ReaderWriterLockSlim @lock)
         {
             @lock.EnterReadLock();
-            return new DelegatedDisposable(@lock.ExitReadLock);
+            return Disposables.For(@lock.ExitReadLock);
         }
 
         public static IDisposable AcquireUpgradeableReadLock(this ReaderWriterLockSlim @lock)
         {
             @lock.EnterUpgradeableReadLock();
-            return new DelegatedDisposable(@lock.ExitUpgradeableReadLock);
+            return Disposables.For(@lock.ExitUpgradeableReadLock);
         }
 
         public static IDisposable AcquireWriteLock(this ReaderWriterLockSlim @lock)
         {
             @lock.EnterWriteLock();
-            return new DelegatedDisposable(@lock.ExitWriteLock);
+            return Disposables.For(@lock.ExitWriteLock);
         }
 
     }
+
 }

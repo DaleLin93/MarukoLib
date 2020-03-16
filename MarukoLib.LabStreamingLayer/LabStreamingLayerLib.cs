@@ -287,8 +287,8 @@ namespace MarukoLib.LabStreamingLayer
             */
             public string as_xml()
             {
-                IntPtr pXml = Interop.lsl_get_xml(obj);
-                string strXml = Marshal.PtrToStringAnsi(pXml);
+                var pXml = Interop.lsl_get_xml(obj);
+                var strXml = Marshal.PtrToStringAnsi(pXml);
                 Interop.lsl_destroy_string(pXml);
                 return strXml;
             }
@@ -463,9 +463,9 @@ namespace MarukoLib.LabStreamingLayer
         public static StreamInfo[] resolve_streams() { return resolve_streams(1.0); }
         public static StreamInfo[] resolve_streams(double wait_time)
         {
-            IntPtr[] buf = new IntPtr[1024]; int num = Interop.lsl_resolve_all(buf, (uint)buf.Length, wait_time);
-            StreamInfo[] res = new StreamInfo[num];
-            for (int k = 0; k < num; k++)
+            var buf = new IntPtr[1024]; var num = Interop.lsl_resolve_all(buf, (uint)buf.Length, wait_time);
+            var res = new StreamInfo[num];
+            for (var k = 0; k < num; k++)
                 res[k] = new StreamInfo(buf[k]);
             return res;
         }
@@ -485,9 +485,9 @@ namespace MarukoLib.LabStreamingLayer
         public static StreamInfo[] resolve_stream(string prop, string value, int minimum) { return resolve_stream(prop, value, minimum, FOREVER); }
         public static StreamInfo[] resolve_stream(string prop, string value, int minimum, double timeout)
         {
-            IntPtr[] buf = new IntPtr[1024]; int num = Interop.lsl_resolve_byprop(buf, (uint)buf.Length, prop, value, minimum, timeout);
-            StreamInfo[] res = new StreamInfo[num];
-            for (int k = 0; k < num; k++)
+            var buf = new IntPtr[1024]; var num = Interop.lsl_resolve_byprop(buf, (uint)buf.Length, prop, value, minimum, timeout);
+            var res = new StreamInfo[num];
+            for (var k = 0; k < num; k++)
                 res[k] = new StreamInfo(buf[k]);
             return res;
         }
@@ -507,9 +507,9 @@ namespace MarukoLib.LabStreamingLayer
         public static StreamInfo[] resolve_stream(string pred, int minimum) { return resolve_stream(pred, minimum, FOREVER); }
         public static StreamInfo[] resolve_stream(string pred, int minimum, double timeout)
         {
-            IntPtr[] buf = new IntPtr[1024]; int num = Interop.lsl_resolve_bypred(buf, (uint)buf.Length, pred, minimum, timeout);
-            StreamInfo[] res = new StreamInfo[num];
-            for (int k = 0; k < num; k++)
+            var buf = new IntPtr[1024]; var num = Interop.lsl_resolve_bypred(buf, (uint)buf.Length, pred, minimum, timeout);
+            var res = new StreamInfo[num];
+            for (var k = 0; k < num; k++)
                 res[k] = new StreamInfo(buf[k]);
             return res;
         }
@@ -563,7 +563,7 @@ namespace MarukoLib.LabStreamingLayer
             * @throws TimeoutException (if the timeout expires), or LostException (if the stream source has been lost).
             */
             public StreamInfo info() { return info(FOREVER); }
-            public StreamInfo info(double timeout) { int ec = 0; IntPtr res = Interop.lsl_get_fullinfo(obj, timeout, ref ec); check_error(ec); return new StreamInfo(res); }
+            public StreamInfo info(double timeout) { var ec = 0; var res = Interop.lsl_get_fullinfo(obj, timeout, ref ec); check_error(ec); return new StreamInfo(res); }
 
             /**
             * Subscribe to the data stream.
@@ -574,7 +574,7 @@ namespace MarukoLib.LabStreamingLayer
             * @throws TimeoutException (if the timeout expires), or LostException (if the stream source has been lost).
             */
             public void open_stream() { open_stream(FOREVER); }
-            public void open_stream(double timeout) { int ec = 0; Interop.lsl_open_stream(obj, timeout, ref ec); check_error(ec); }
+            public void open_stream(double timeout) { var ec = 0; Interop.lsl_open_stream(obj, timeout, ref ec); check_error(ec); }
 
             /**
             * Drop the current data stream.
@@ -597,7 +597,7 @@ namespace MarukoLib.LabStreamingLayer
             * @throws TimeoutException (if the timeout expires), or LostException (if the stream source has been lost).
             */
             public double time_correction() { return time_correction(FOREVER); }
-            public double time_correction(double timeout) { int ec = 0; double res = Interop.lsl_time_correction(obj, timeout, ref ec); check_error(ec); return res; }
+            public double time_correction(double timeout) { var ec = 0; var res = Interop.lsl_time_correction(obj, timeout, ref ec); check_error(ec); return res; }
 
             // =======================================
             // === Pulling a sample from the inlet ===
@@ -613,29 +613,29 @@ namespace MarukoLib.LabStreamingLayer
             * @throws LostException (if the stream source has been lost).
             */
             public double pull_sample(float[] sample) { return pull_sample(sample, FOREVER); }
-            public double pull_sample(float[] sample, double timeout) { int ec = 0; double res = Interop.lsl_pull_sample_f(obj, sample, sample.Length, timeout, ref ec); check_error(ec); return res; }
+            public double pull_sample(float[] sample, double timeout) { var ec = 0; var res = Interop.lsl_pull_sample_f(obj, sample, sample.Length, timeout, ref ec); check_error(ec); return res; }
             public double pull_sample(double[] sample) { return pull_sample(sample, FOREVER); }
-            public double pull_sample(double[] sample, double timeout) { int ec = 0; double res = Interop.lsl_pull_sample_d(obj, sample, sample.Length, timeout, ref ec); check_error(ec); return res; }
+            public double pull_sample(double[] sample, double timeout) { var ec = 0; var res = Interop.lsl_pull_sample_d(obj, sample, sample.Length, timeout, ref ec); check_error(ec); return res; }
             public double pull_sample(int[] sample) { return pull_sample(sample, FOREVER); }
-            public double pull_sample(int[] sample, double timeout) { int ec = 0; double res = Interop.lsl_pull_sample_i(obj, sample, sample.Length, timeout, ref ec); check_error(ec); return res; }
+            public double pull_sample(int[] sample, double timeout) { var ec = 0; var res = Interop.lsl_pull_sample_i(obj, sample, sample.Length, timeout, ref ec); check_error(ec); return res; }
             public double pull_sample(short[] sample) { return pull_sample(sample, FOREVER); }
-            public double pull_sample(short[] sample, double timeout) { int ec = 0; double res = Interop.lsl_pull_sample_s(obj, sample, sample.Length, timeout, ref ec); check_error(ec); return res; }
+            public double pull_sample(short[] sample, double timeout) { var ec = 0; var res = Interop.lsl_pull_sample_s(obj, sample, sample.Length, timeout, ref ec); check_error(ec); return res; }
             public double pull_sample(char[] sample) { return pull_sample(sample, FOREVER); }
-            public double pull_sample(char[] sample, double timeout) { int ec = 0; double res = Interop.lsl_pull_sample_c(obj, sample, sample.Length, timeout, ref ec); check_error(ec); return res; }
+            public double pull_sample(char[] sample, double timeout) { var ec = 0; var res = Interop.lsl_pull_sample_c(obj, sample, sample.Length, timeout, ref ec); check_error(ec); return res; }
             public double pull_sample(string[] sample) { return pull_sample(sample, FOREVER); }
             public double pull_sample(string[] sample, double timeout)
             {
-                int ec = 0;
-                IntPtr[] tmp = new IntPtr[sample.Length];
-                double res = Interop.lsl_pull_sample_str(obj, tmp, tmp.Length, timeout, ref ec); check_error(ec);
+                var ec = 0;
+                var tmp = new IntPtr[sample.Length];
+                var res = Interop.lsl_pull_sample_str(obj, tmp, tmp.Length, timeout, ref ec); check_error(ec);
                 try
                 {
-                    for (int k = 0; k < tmp.Length; k++)
+                    for (var k = 0; k < tmp.Length; k++)
                         sample[k] = Marshal.PtrToStringAnsi(tmp[k]);
                 }
                 finally
                 {
-                    for (int k = 0; k < tmp.Length; k++)
+                    for (var k = 0; k < tmp.Length; k++)
                         Interop.lsl_destroy_string(tmp[k]);
                 }
                 return res;
@@ -657,32 +657,32 @@ namespace MarukoLib.LabStreamingLayer
             * @throws LostException (if the stream source has been lost).
             */
             public int pull_chunk(float[,] data_buffer, double[] timestamp_buffer) { return pull_chunk(data_buffer, timestamp_buffer, 0.0); }
-            public int pull_chunk(float[,] data_buffer, double[] timestamp_buffer, double timeout) { int ec = 0; uint res = Interop.lsl_pull_chunk_f(obj, data_buffer, timestamp_buffer, (uint)data_buffer.Length, (uint)timestamp_buffer.Length, timeout, ref ec); check_error(ec); return (int)res / data_buffer.GetLength(1); }
+            public int pull_chunk(float[,] data_buffer, double[] timestamp_buffer, double timeout) { var ec = 0; var res = Interop.lsl_pull_chunk_f(obj, data_buffer, timestamp_buffer, (uint)data_buffer.Length, (uint)timestamp_buffer.Length, timeout, ref ec); check_error(ec); return (int)res / data_buffer.GetLength(1); }
             public int pull_chunk(double[,] data_buffer, double[] timestamp_buffer) { return pull_chunk(data_buffer, timestamp_buffer, 0.0); }
-            public int pull_chunk(double[,] data_buffer, double[] timestamp_buffer, double timeout) { int ec = 0; uint res = Interop.lsl_pull_chunk_d(obj, data_buffer, timestamp_buffer, (uint)data_buffer.Length, (uint)timestamp_buffer.Length, timeout, ref ec); check_error(ec); return (int)res / data_buffer.GetLength(1); }
+            public int pull_chunk(double[,] data_buffer, double[] timestamp_buffer, double timeout) { var ec = 0; var res = Interop.lsl_pull_chunk_d(obj, data_buffer, timestamp_buffer, (uint)data_buffer.Length, (uint)timestamp_buffer.Length, timeout, ref ec); check_error(ec); return (int)res / data_buffer.GetLength(1); }
             public int pull_chunk(int[,] data_buffer, double[] timestamp_buffer) { return pull_chunk(data_buffer, timestamp_buffer, 0.0); }
-            public int pull_chunk(int[,] data_buffer, double[] timestamp_buffer, double timeout) { int ec = 0; uint res = Interop.lsl_pull_chunk_i(obj, data_buffer, timestamp_buffer, (uint)data_buffer.Length, (uint)timestamp_buffer.Length, timeout, ref ec); check_error(ec); return (int)res / data_buffer.GetLength(1); }
+            public int pull_chunk(int[,] data_buffer, double[] timestamp_buffer, double timeout) { var ec = 0; var res = Interop.lsl_pull_chunk_i(obj, data_buffer, timestamp_buffer, (uint)data_buffer.Length, (uint)timestamp_buffer.Length, timeout, ref ec); check_error(ec); return (int)res / data_buffer.GetLength(1); }
             public int pull_chunk(short[,] data_buffer, double[] timestamp_buffer) { return pull_chunk(data_buffer, timestamp_buffer, 0.0); }
-            public int pull_chunk(short[,] data_buffer, double[] timestamp_buffer, double timeout) { int ec = 0; uint res = Interop.lsl_pull_chunk_s(obj, data_buffer, timestamp_buffer, (uint)data_buffer.Length, (uint)timestamp_buffer.Length, timeout, ref ec); check_error(ec); return (int)res / data_buffer.GetLength(1); }
+            public int pull_chunk(short[,] data_buffer, double[] timestamp_buffer, double timeout) { var ec = 0; var res = Interop.lsl_pull_chunk_s(obj, data_buffer, timestamp_buffer, (uint)data_buffer.Length, (uint)timestamp_buffer.Length, timeout, ref ec); check_error(ec); return (int)res / data_buffer.GetLength(1); }
             public int pull_chunk(char[,] data_buffer, double[] timestamp_buffer) { return pull_chunk(data_buffer, timestamp_buffer, 0.0); }
-            public int pull_chunk(char[,] data_buffer, double[] timestamp_buffer, double timeout) { int ec = 0; uint res = Interop.lsl_pull_chunk_c(obj, data_buffer, timestamp_buffer, (uint)data_buffer.Length, (uint)timestamp_buffer.Length, timeout, ref ec); check_error(ec); return (int)res / data_buffer.GetLength(1); }
+            public int pull_chunk(char[,] data_buffer, double[] timestamp_buffer, double timeout) { var ec = 0; var res = Interop.lsl_pull_chunk_c(obj, data_buffer, timestamp_buffer, (uint)data_buffer.Length, (uint)timestamp_buffer.Length, timeout, ref ec); check_error(ec); return (int)res / data_buffer.GetLength(1); }
             public int pull_chunk(string[,] data_buffer, double[] timestamp_buffer) { return pull_chunk(data_buffer, timestamp_buffer, 0.0); }
             public int pull_chunk(string[,] data_buffer, double[] timestamp_buffer, double timeout)
             {
-                int ec = 0;
-                IntPtr[,] tmp = new IntPtr[data_buffer.GetLength(0), data_buffer.GetLength(1)];
-                uint res = Interop.lsl_pull_chunk_str(obj, tmp, timestamp_buffer, (uint)tmp.Length, (uint)timestamp_buffer.Length, timeout, ref ec);
+                var ec = 0;
+                var tmp = new IntPtr[data_buffer.GetLength(0), data_buffer.GetLength(1)];
+                var res = Interop.lsl_pull_chunk_str(obj, tmp, timestamp_buffer, (uint)tmp.Length, (uint)timestamp_buffer.Length, timeout, ref ec);
                 check_error(ec);
                 try
                 {
-                    for (int s = 0; s < tmp.GetLength(0); s++)
-                        for (int c = 0; c < tmp.GetLength(1); c++)
+                    for (var s = 0; s < tmp.GetLength(0); s++)
+                        for (var c = 0; c < tmp.GetLength(1); c++)
                             data_buffer[s, c] = Marshal.PtrToStringAnsi(tmp[s, c]);
                 }
                 finally
                 {
-                    for (int s = 0; s < tmp.GetLength(0); s++)
-                        for (int c = 0; c < tmp.GetLength(1); c++)
+                    for (var s = 0; s < tmp.GetLength(0); s++)
+                        for (var c = 0; c < tmp.GetLength(1); c++)
                             Interop.lsl_destroy_string(tmp[s, c]);
                 }
                 return (int)res / data_buffer.GetLength(1);
@@ -879,10 +879,10 @@ namespace MarukoLib.LabStreamingLayer
             */
             public StreamInfo[] results()
             {
-                IntPtr[] buf = new IntPtr[1024];
-                int num = Interop.lsl_resolver_results(obj, buf, (uint)buf.Length);
-                StreamInfo[] res = new StreamInfo[num];
-                for (int k = 0; k < num; k++)
+                var buf = new IntPtr[1024];
+                var num = Interop.lsl_resolver_results(obj, buf, (uint)buf.Length);
+                var res = new StreamInfo[num];
+                for (var k = 0; k < num; k++)
                     res[k] = new StreamInfo(buf[k]);
                 return res;
             }

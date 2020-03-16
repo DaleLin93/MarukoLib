@@ -12,7 +12,7 @@ using MarukoLib.Logging;
 namespace MarukoLib.DirectX
 {
 
-    public abstract class SimpleD2DForm : RenderForm, IDisposable
+    public abstract class SimpleD2DForm : RenderForm
     {
 
         private static readonly Logger Logger = Logger.GetLogger(typeof(SimpleD2DForm));
@@ -23,7 +23,7 @@ namespace MarukoLib.DirectX
         {
             Load += Window_OnLoaded;
             Resize += Window_OnResize;
-            FormClosing += Window_OnFormClosing; ;
+            FormClosing += Window_OnFormClosing;
         }
 
         #region DX Properties

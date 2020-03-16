@@ -35,7 +35,7 @@ namespace MarukoLib.Threading
 
         private static readonly Logger Logger = Logger.GetLogger(typeof(AsyncCyclicExecutor));
 
-        internal static uint InstanceId = 0;
+        internal static readonly AtomicLong InstanceId = new AtomicLong();
 
         public event EventHandler<TaskExceptionEventArgs> UnhandledException;
 
@@ -65,7 +65,7 @@ namespace MarukoLib.Threading
 
         public AsyncCyclicExecutor(Action task, bool stopOnUnhandledException = false, ThreadPriority priority = ThreadPriority.Normal, 
             ApartmentState? apartmentState = null, StoppingAction stoppingAction = StoppingAction.None)
-            : this($"{nameof(AsyncCyclicExecutor) } #{InstanceId++}", task, stopOnUnhandledException, priority, apartmentState, stoppingAction) { }
+            : this($"{nameof(AsyncCyclicExecutor)} #{InstanceId.GetAndIncrement()}", task, stopOnUnhandledException, priority, apartmentState, stoppingAction) { }
 
         public AsyncCyclicExecutor(string name, Action task, bool stopOnUnhandledException = false, ThreadPriority priority = ThreadPriority.Normal, 
             ApartmentState? apartmentState = null, StoppingAction stoppingAction = StoppingAction.None)
@@ -98,6 +98,7 @@ namespace MarukoLib.Threading
         {
             if (_stopped.Set(true)) return false;
             Stopping?.Invoke(this, EventArgs.Empty);
+            // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
             switch (_stoppingAction)
             {
                 case StoppingAction.Interrupt:

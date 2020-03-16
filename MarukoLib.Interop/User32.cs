@@ -334,7 +334,7 @@ namespace MarukoLib.Interop
         public static ICollection<IntPtr> EnumMonitors(IntPtr? hdc = null, Rect? clip = null)
         {
             var list = new LinkedList<IntPtr>();
-            using (var clipPtr = clip?.AllocUnmanaged(false) ?? new Disposable<IntPtr>.NoAction(IntPtr.Zero))
+            using (var clipPtr = clip?.AllocUnmanaged(false) ?? new Disposable<IntPtr>.NoOp(IntPtr.Zero))
             {
                 EnumDisplayMonitors(hdc ?? IntPtr.Zero, clipPtr.Value, (IntPtr hMonitor, IntPtr hDc, ref Rect rect, int p) =>
                 {

@@ -481,17 +481,17 @@ namespace MarukoLib.DirectX
                 desc.SampleDescription.Count = 1;
                 desc.SampleDescription.Quality = 0;
 
-                Texture2D temp = new Texture2D(d3dDevice, desc);
+                var temp = new Texture2D(d3dDevice, desc);
 
-                DXGI.Format fmt = EnsureNotTypeless(desc.Format);
+                var fmt = EnsureNotTypeless(desc.Format);
 
-                FormatSupport support = d3dDevice.CheckFormatSupport(fmt);
+                var support = d3dDevice.CheckFormatSupport(fmt);
 
                 if ((support & FormatSupport.MultisampleResolve) == 0) return null;
 
-                for (int item = 0; item < desc.ArraySize; ++item) {
-                    for (int level = 0; level < desc.MipLevels; ++level) {
-                        int index = Resource.CalculateSubResourceIndex(level, item, desc.MipLevels);
+                for (var item = 0; item < desc.ArraySize; ++item) {
+                    for (var level = 0; level < desc.MipLevels; ++level) {
+                        var index = Resource.CalculateSubResourceIndex(level, item, desc.MipLevels);
                         deviceContext.ResolveSubresource(temp, index, source, index, fmt);
                     }
                 }

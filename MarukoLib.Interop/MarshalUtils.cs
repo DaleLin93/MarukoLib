@@ -4,8 +4,10 @@ using MarukoLib.Lang;
 
 namespace MarukoLib.Interop
 {
+
     public static class MarshalUtils
     {
+
         /// <param name="structure"></param>
         /// <param name="destroy"> to call the <see cref="M:System.Runtime.InteropServices.Marshal.DestroyStructure(System.IntPtr,System.Type)" /> method before release the unmanaged memory. Note that passing <see langword="false" /> when the memory block already contains data can lead to a memory leak.</param>
         public static Disposable<IntPtr> AllocUnmanaged<T>(this T structure, bool destroy) where T : struct
@@ -21,8 +23,9 @@ namespace MarukoLib.Interop
                 };
             else
                 freeAction = Marshal.FreeHGlobal;
-            return new Disposable<IntPtr>.Delegated(structPtr, freeAction);
+            return Disposable<IntPtr>.Of(structPtr, freeAction);
         }
 
     }
+
 }
