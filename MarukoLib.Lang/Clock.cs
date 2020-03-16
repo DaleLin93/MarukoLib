@@ -74,11 +74,12 @@ namespace MarukoLib.Lang
         private sealed class Delegated : Clock
         {
 
-            private readonly Func<long> _func;
+            private readonly Supplier<long> _supplier;
 
-            public Delegated(Func<long> func, TimeUnit unit) : base(unit) => _func = func;
+            public Delegated(Supplier<long> supplier, TimeUnit unit) : base(unit) 
+                => _supplier = supplier ?? throw new ArgumentNullException(nameof(supplier));
 
-            public override long Time => _func();
+            public override long Time => _supplier();
 
         }
 
@@ -91,7 +92,7 @@ namespace MarukoLib.Lang
 
         protected Clock(TimeUnit unit) => Unit = unit;
 
-        public static Clock Of([NotNull] Func<long> func, TimeUnit unit) => new Delegated(func, unit);
+        public static Clock Of([NotNull] Supplier<long> supplier, TimeUnit unit) => new Delegated(supplier, unit);
 
         public TimeUnit Unit { get; }
 
@@ -102,11 +103,12 @@ namespace MarukoLib.Lang
     public class OverridenClock : Clock
     {
 
-        public OverridenClock(IClock originalClock, TimeUnit unit) : base(unit) => OriginalClock = originalClock;
+        public OverridenClock([NotNull] IClock originalClock, TimeUnit unit) : base(unit) 
+            => OriginalClock = originalClock ?? throw new ArgumentNullException(nameof(originalClock));
 
-        protected OverridenClock(IClock originalClock) : base(originalClock.Unit) => OriginalClock = originalClock;
+        protected OverridenClock([NotNull] IClock originalClock) : this(originalClock, originalClock.Unit) { }
 
-        public IClock OriginalClock { get; }
+        [NotNull] public IClock OriginalClock { get; }
 
         public override long Time => Unit == OriginalClock.Unit ? OriginalClock.Time : OriginalClock.Get(Unit);
 
@@ -115,9 +117,9 @@ namespace MarukoLib.Lang
     public class AlignedClock : OverridenClock
     {
 
-        public AlignedClock(IClock originalClock, long offset) : base(originalClock) => Offset = offset;
+        public AlignedClock([NotNull] IClock originalClock, long offset) : base(originalClock) => Offset = offset;
 
-        public static AlignedClock FromNow(IClock clock) => new AlignedClock(clock, -clock.Time); 
+        public static AlignedClock FromNow([NotNull] IClock clock) => new AlignedClock(clock, -clock.Time); 
 
         public long Offset { get; }
 
@@ -125,27 +127,39 @@ namespace MarukoLib.Lang
 
     }
 
+    public class TransformedClock : OverridenClock
+    {
+
+        public TransformedClock([NotNull] IClock originalClock, [NotNull] UnaryOperator<long> op) : base(originalClock) 
+            => Operator = op ?? throw new ArgumentNullException(nameof(op));
+
+        [NotNull] public UnaryOperator<long> Operator { get; }
+
+        public override long Time => Operator(OriginalClock.Time);
+
+    }
+
     public class SyncedClock : OverridenClock
     {
 
-        private readonly long _alignedLocal, _alignedRemote;
+        private readonly long _localBase, _remoteBase;
 
         private readonly double _multiplier;
 
-        public SyncedClock(IClock originalClock, long localTime, long remoteTime, double multiplier = 1) : base(originalClock)
+        public SyncedClock([NotNull] IClock originalClock, long localTime, long remoteTime, double multiplier = 1) : base(originalClock)
         {
             if (multiplier < 0) throw new ArgumentException($"{nameof(multiplier)} cannot be negative");
-            _alignedLocal = localTime;
-            _alignedRemote = remoteTime;
+            _localBase = localTime;
+            _remoteBase = remoteTime;
             _multiplier = multiplier;
         }
 
-        public static SyncedClock Sync(IClock clock, long remoteTime, double multiplier = 1) => new SyncedClock(clock, clock.Time, remoteTime, multiplier);
+        public static SyncedClock Sync([NotNull] IClock clock, long remoteTime, double multiplier = 1) => new SyncedClock(clock, clock.Time, remoteTime, multiplier);
 
-        public static bool TrySync(IClock clock, Supplier<long> remoteTimeSupplier, TimeSpan syncWithin, int maxRetryCount, out SyncedClock synced) =>
-            TrySync(clock, unit => remoteTimeSupplier(), syncWithin, maxRetryCount, out synced);
+        public static bool TrySync([NotNull] IClock clock, Supplier<long> remoteTimeSupplier, TimeSpan syncWithin, int maxRetryCount, out SyncedClock synced) 
+            => TrySync(clock, unit => remoteTimeSupplier(), syncWithin, maxRetryCount, out synced);
 
-        public static bool TrySync(IClock clock, Func<TimeUnit, long> remoteTimeSupplier, TimeSpan syncWithin, int maxRetryCount, out SyncedClock synced)
+        public static bool TrySync([NotNull] IClock clock, Func<TimeUnit, long> remoteTimeSupplier, TimeSpan syncWithin, int maxRetryCount, out SyncedClock synced)
         {
             for (var i = maxRetryCount - 1; i >= 0; i--)
             {
@@ -163,10 +177,13 @@ namespace MarukoLib.Lang
             return false;
         }
 
-        public override long Time => _alignedRemote + (long)((OriginalClock.Time - _alignedLocal) * _multiplier) + (_alignedRemote - _alignedLocal);
+        public override long Time => _remoteBase + (long)((OriginalClock.Time - _localBase) * _multiplier);
 
     }
 
+    /// <summary>
+    /// The freezable clock is a clock that can be paused and resumed.
+    /// </summary>
     public class FreezableClock : OverridenClock
     {
 
@@ -180,7 +197,7 @@ namespace MarukoLib.Lang
 
         private long _frozenAt;
 
-        public FreezableClock(IClock clock) : base(clock) { }
+        public FreezableClock([NotNull] IClock clock) : base(clock) { }
 
         public override long Time => IsFrozen ? _frozenAt : OriginalClock.Time - FrozenTime;
 
@@ -256,19 +273,8 @@ namespace MarukoLib.Lang
 
     public static class ClockExt
     {
-        
-        private class MappedClock : OverridenClock
-        {
 
-            public MappedClock(IClock originalClock, UnaryOperator<long> @operator) : base(originalClock) => Operator = @operator;
-
-            public UnaryOperator<long> Operator { get; }
-
-            public override long Time => Operator(OriginalClock.Time);
-
-        }
-
-        public static IClock As(this IClock clock, TimeUnit timeUnit)
+        public static IClock As([NotNull] this IClock clock, TimeUnit timeUnit)
         {
             for (;;)
             {
@@ -282,33 +288,33 @@ namespace MarukoLib.Lang
             }
         }
 
-        public static IClock Convert(this IClock clock, UnaryOperator<long> @operator) => new MappedClock(clock, @operator);
+        public static IClock Convert([NotNull] this IClock clock, [NotNull] UnaryOperator<long> @operator) => new TransformedClock(clock, @operator);
 
-        public static IClock Adjust(this IClock clock, double scale) => Adjust(clock, clock.Time, scale);
+        public static IClock Adjust([NotNull] this IClock clock, double scale) => Adjust(clock, clock.Time, scale);
 
-        public static IClock Adjust(this IClock clock, long offset) => Convert(clock, time => time + offset);
+        public static IClock Adjust([NotNull] this IClock clock, long offset) => Convert(clock, time => time + offset);
 
-        public static IClock Adjust(this IClock clock, long offset, double scale)
+        public static IClock Adjust([NotNull] this IClock clock, long offset, double scale)
         {
             if (scale < 0) throw new ArgumentException($"{nameof(scale)} cannot be negative");
             return Convert(clock, time => (long)((time + offset) * scale));
         }
 
-        public static long GetDays(this IClock clock) => Get(clock, TimeUnit.Day);
+        public static long GetDays([NotNull] this IClock clock) => Get(clock, TimeUnit.Day);
 
-        public static long GetHours(this IClock clock) => Get(clock, TimeUnit.Hour);
+        public static long GetHours([NotNull] this IClock clock) => Get(clock, TimeUnit.Hour);
 
-        public static long GetMinutes(this IClock clock) => Get(clock, TimeUnit.Minute);
+        public static long GetMinutes([NotNull] this IClock clock) => Get(clock, TimeUnit.Minute);
 
-        public static long GetSeconds(this IClock clock) => Get(clock, TimeUnit.Second);
+        public static long GetSeconds([NotNull] this IClock clock) => Get(clock, TimeUnit.Second);
 
-        public static long GetMilliseconds(this IClock clock) => Get(clock, TimeUnit.Millisecond);
+        public static long GetMilliseconds([NotNull] this IClock clock) => Get(clock, TimeUnit.Millisecond);
 
-        public static long GetTicks(this IClock clock) => Get(clock, TimeUnit.Tick);
+        public static long GetTicks([NotNull] this IClock clock) => Get(clock, TimeUnit.Tick);
 
-        public static long Get(this IClock clock, TimeUnit timeUnit) => clock.Unit.ConvertTo(clock.Time, timeUnit);
+        public static long Get([NotNull] this IClock clock, TimeUnit timeUnit) => clock.Unit.ConvertTo(clock.Time, timeUnit);
 
-        public static TimeSpan GetTimeSpan(this IClock clock) => new TimeSpan(clock.Time * (long)clock.Unit);
+        public static TimeSpan GetTimeSpan([NotNull] this IClock clock) => new TimeSpan(clock.Time * (long)clock.Unit);
 
     }
 
