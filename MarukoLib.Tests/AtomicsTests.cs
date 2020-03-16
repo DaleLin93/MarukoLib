@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 using MarukoLib.Lang.Concurrent;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SharpDX;
 
 namespace MarukoLib.Tests
 {
@@ -77,7 +78,7 @@ namespace MarukoLib.Tests
         [TestMethod]
         public void TestAtomicRef()
         {
-            var atomicRef = new Atomic<A>();
+            var atomicRef = new AtomicReference<A>();
             Assert.AreEqual(null, atomicRef.Reference);
             Assert.AreEqual(null, atomicRef.Set(new A(1)));
             Assert.AreEqual(new A(1), atomicRef.Reference);
@@ -87,6 +88,28 @@ namespace MarukoLib.Tests
             Assert.AreEqual(new A(2), atomicRef.Reference);
         }
 
+        [TestMethod]
+        public void TestAtomicEnum()
+        {
+            var atomicEnum = new Atomic<EventResetMode>(EventResetMode.ManualReset);
+            Assert.AreEqual(EventResetMode.ManualReset, atomicEnum.Get());
+            Assert.IsFalse(atomicEnum.CompareAndSet(EventResetMode.AutoReset, EventResetMode.ManualReset));
+            Assert.AreEqual(EventResetMode.ManualReset, atomicEnum.Get());
+            Assert.IsTrue(atomicEnum.CompareAndSet(EventResetMode.ManualReset, EventResetMode.AutoReset));
+            Assert.AreEqual(EventResetMode.AutoReset, atomicEnum.Get());
+        }
+
+        [TestMethod]
+        public void TestAtomicStruct()
+        {
+            var atomicStruct = new Atomic<Point>(new Point(1, 2));
+            Assert.AreNotEqual(new Point(2, 1), atomicStruct.Get());
+            Assert.AreEqual(new Point(1, 2), atomicStruct.Get());
+            Assert.IsFalse(atomicStruct.CompareAndSet(new Point(2, 1), new Point(2, 2)));
+            Assert.AreEqual(new Point(1, 2), atomicStruct.Get());
+            Assert.IsTrue(atomicStruct.CompareAndSet(new Point(1, 2), new Point(2, 2)));
+            Assert.AreEqual(new Point(2, 2), atomicStruct.Get());
+        }
 
     }
 }

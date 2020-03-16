@@ -39,51 +39,8 @@ namespace MarukoLib.Lang.Concurrent
 
     }
 
-    public sealed class AtomicEnum<T> : IAtomic<T> where T : Enum 
-    {
-
-        private readonly Atomic<object> _value = new Atomic<object>();
-
-        public AtomicEnum(T defaultValue) => DefaultValue = defaultValue;
-
-        public T DefaultValue { get; }
-
-        /// <summary>
-        /// <inheritdoc cref="IAtomic{T}"/>
-        /// </summary>
-        public T Get() => Cast(_value.Get());
-
-        /// <summary>
-        /// <inheritdoc cref="IAtomic{T}"/>
-        /// </summary>
-        public T Set(T value) => Cast(_value.Set(value));
-
-        /// <summary>
-        /// <inheritdoc cref="IAtomic{T}"/>
-        /// </summary>
-        public bool CompareAndSet(T oldValue, T newValue) => _value.CompareAndSet(oldValue, newValue);
-
-        public void Compute(UnaryOperator<T> @operator, out T oldValue, out T newValue)
-        {
-            _value.Compute(e => @operator(Cast(e)), out var old, out var @new);
-            oldValue = Cast(old);
-            newValue = Cast(@new);
-        }
-
-        private T Cast(object obj) => (obj is T t) ? t : DefaultValue;
-
-    }
-
     public abstract class AbstractAtomic<T> : IAtomic<T>, IContainer, IContainer<T>
     {
-
-        protected const bool UseSpinning = true;
-
-        protected const int PreBlockSpinningCount = 15;
-
-        private static readonly bool RefType = typeof(T).IsByRef;
-
-        private readonly object _lock = new object();
 
         /// <summary>
         /// <inheritdoc cref="IAtomic{T}"/>
@@ -102,22 +59,8 @@ namespace MarukoLib.Lang.Concurrent
 
         /// <summary>
         /// <inheritdoc cref="IAtomic{T}"/>
-        /// Locking: optimistic locking (CAS, spinning count: <see cref="PreBlockSpinningCount"/>) -> pessimistic locking.
         /// </summary>
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse")]
-        public virtual void Compute(UnaryOperator<T> @operator, out T oldValue, out T newValue)
-        {
-            if (UseSpinning)
-            {
-                for (var i = 0; i < PreBlockSpinningCount; i++)
-                {
-                    newValue = @operator(oldValue = Get());
-                    if (RefType ? ReferenceEquals(oldValue, newValue) : Equals(oldValue, newValue)) return;
-                    if (CompareAndSet(oldValue, newValue)) return;
-                }
-            }
-            lock (_lock) Set(newValue = @operator(oldValue = Get()));
-        }
+        public abstract void Compute(UnaryOperator<T> @operator, out T oldValue, out T newValue);
 
         object IContainer.Value => Get();
 
@@ -156,6 +99,19 @@ namespace MarukoLib.Lang.Concurrent
         /// </summary>
         public override bool CompareAndSet(bool oldValue, bool newValue) => 
             Interlocked.CompareExchange(ref _val, newValue ? 1 : 0, oldValue ? 1 : 0) == (oldValue ? 1 : 0);
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override void Compute(UnaryOperator<bool> @operator, out bool oldValue, out bool newValue)
+        {
+            for (; ; )
+            {
+                newValue = @operator(oldValue = Get());
+                if (oldValue == newValue) return;
+                if (CompareAndSet(oldValue, newValue)) return;
+            }
+        }
 
         /// <summary>
         /// Set value to 'true', and returns true if the value was changed.
@@ -201,6 +157,19 @@ namespace MarukoLib.Lang.Concurrent
         /// <inheritdoc cref="IAtomic{T}"/>
         /// </summary>
         public override bool CompareAndSet(int oldValue, int newValue) => Interlocked.CompareExchange(ref _val, newValue, oldValue) == oldValue;
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override void Compute(UnaryOperator<int> @operator, out int oldValue, out int newValue)
+        {
+            for (; ; )
+            {
+                newValue = @operator(oldValue = Get());
+                if (oldValue == newValue) return;
+                if (CompareAndSet(oldValue, newValue)) return;
+            }
+        }
 
         public void Increment(int delta, out int oldValue, out int newValue) => Compute(v => v + delta, out oldValue, out newValue);
 
@@ -262,6 +231,19 @@ namespace MarukoLib.Lang.Concurrent
         /// <inheritdoc cref="IAtomic{T}"/>
         /// </summary>
         public override bool CompareAndSet(long oldValue, long newValue) => Interlocked.CompareExchange(ref _val, newValue, oldValue) == oldValue;
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override void Compute(UnaryOperator<long> @operator, out long oldValue, out long newValue)
+        {
+            for (; ; )
+            {
+                newValue = @operator(oldValue = Get());
+                if (oldValue == newValue) return;
+                if (CompareAndSet(oldValue, newValue)) return;
+            }
+        }
 
         public void Increment(long delta, out long oldValue, out long newValue) => Compute(v => v + delta, out oldValue, out newValue);
 
@@ -325,6 +307,20 @@ namespace MarukoLib.Lang.Concurrent
         [SuppressMessage("ReSharper", "CompareOfFloatsByEqualityOperator")]
         public override bool CompareAndSet(float oldValue, float newValue) => Interlocked.CompareExchange(ref _val, newValue, oldValue) == oldValue;
 
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override void Compute(UnaryOperator<float> @operator, out float oldValue, out float newValue)
+        {
+            for (; ; )
+            {
+                newValue = @operator(oldValue = Get());
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
+                if (oldValue == newValue) return;
+                if (CompareAndSet(oldValue, newValue)) return;
+            }
+        }
+
         public void Increment(float delta, out float oldValue, out float newValue) => Compute(v => v + delta, out oldValue, out newValue);
 
         public void Decrement(float delta, out float oldValue, out float newValue) => Compute(v => v - delta, out oldValue, out newValue);
@@ -387,6 +383,20 @@ namespace MarukoLib.Lang.Concurrent
         [SuppressMessage("ReSharper", "CompareOfFloatsByEqualityOperator")]
         public override bool CompareAndSet(double oldValue, double newValue) => Interlocked.CompareExchange(ref _val, newValue, oldValue) == oldValue;
 
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override void Compute(UnaryOperator<double> @operator, out double oldValue, out double newValue)
+        {
+            for (; ; )
+            {
+                newValue = @operator(oldValue = Get());
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
+                if (oldValue == newValue) return;
+                if (CompareAndSet(oldValue, newValue)) return;
+            }
+        }
+
         public void Increment(double delta, out double oldValue, out double newValue) => Compute(v => v + delta, out oldValue, out newValue);
 
         public void Decrement(double delta, out double oldValue, out double newValue) => Compute(v => v - delta, out oldValue, out newValue);
@@ -448,14 +458,28 @@ namespace MarukoLib.Lang.Concurrent
         /// </summary>
         public override bool CompareAndSet(IntPtr oldValue, IntPtr newValue) => Interlocked.CompareExchange(ref _val, newValue, oldValue) == oldValue;
 
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override void Compute(UnaryOperator<IntPtr> @operator, out IntPtr oldValue, out IntPtr newValue)
+        {
+            for (; ; )
+            {
+                newValue = @operator(oldValue = Get());
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
+                if (oldValue == newValue) return;
+                if (CompareAndSet(oldValue, newValue)) return;
+            }
+        }
+
     }
 
-    public sealed class Atomic<T> : AbstractAtomic<T> where T : class
+    public sealed class AtomicReference<T> : AbstractAtomic<T> where T : class
     {
 
         private T _ref;
 
-        public Atomic(T @ref = null) => _ref = @ref;
+        public AtomicReference(T @ref = null) => _ref = @ref;
 
         /// <summary>
         /// Get or set reference.
@@ -486,6 +510,92 @@ namespace MarukoLib.Lang.Concurrent
         /// <param name="newRef">New reference to set</param>
         /// <returns>Successfully set</returns>
         public override bool CompareAndSet(T oldRef, T newRef) => ReferenceEquals(Interlocked.CompareExchange(ref _ref, newRef, oldRef), oldRef);
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override void Compute(UnaryOperator<T> @operator, out T oldValue, out T newValue)
+        {
+            for (; ; )
+            {
+                newValue = @operator(oldValue = Get());
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
+                if (ReferenceEquals(oldValue, newValue)) return;
+                if (CompareAndSet(oldValue, newValue)) return;
+            }
+        }
+
+    }
+
+    public sealed class Atomic<T> : AbstractAtomic<T>
+    {
+
+        private static readonly bool RefType = typeof(T).IsByRef;
+
+        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+
+        private readonly bool _compareRef;
+
+        private T _value;
+
+        public Atomic(T defaultValue = default) : this(RefType, defaultValue) { }
+
+        public Atomic(bool compareRef, T defaultValue = default)
+        {
+            _compareRef = compareRef;
+            _value = defaultValue;
+        }
+
+        public override T Get()
+        {
+            _lock.EnterReadLock();
+            var value = _value;
+            _lock.ExitReadLock();
+            return value;
+        }
+
+        public override T Set(T value)
+        {
+            _lock.EnterWriteLock();
+            var oldValue = _value;
+            _value = value;
+            _lock.ExitWriteLock();
+            return oldValue;
+        }
+
+        public override bool CompareAndSet(T oldValue, T newValue)
+        {
+            var flag = false;
+            _lock.EnterUpgradeableReadLock();
+            try
+            {
+                if (IsEqual(_value, oldValue))
+                {
+                    flag = true;
+                    _value = newValue;
+                }
+            }
+            finally
+            {
+                _lock.ExitUpgradeableReadLock();
+            }
+            return flag;
+        }
+
+        public override void Compute(UnaryOperator<T> @operator, out T oldValue, out T newValue)
+        {
+            _lock.EnterWriteLock();
+            try
+            {
+                newValue = _value = @operator(oldValue = _value);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
+
+        private bool IsEqual(T a, T b) => _compareRef ? ReferenceEquals(a, b) : Equals(a, b);
 
     }
 
