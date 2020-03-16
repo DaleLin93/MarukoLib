@@ -1,6 +1,4 @@
-﻿using System.Windows;
-
-namespace MarukoLib.Persistence
+﻿namespace MarukoLib.Persistence
 {
 
     public interface IAccessResolver
