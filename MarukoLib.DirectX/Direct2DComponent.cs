@@ -39,7 +39,7 @@ namespace MarukoLib.DirectX
             //***
             using (var surface = BackBuffer.QueryInterface<DXGI.Surface>())
             {
-                _renderTarget = new D2D.RenderTarget(global::MarukoLib.DirectX.Direct2D.Factory2D, surface, new D2D.RenderTargetProperties()
+                _renderTarget = new D2D.RenderTarget(Direct2D.Factory2D, surface, new D2D.RenderTargetProperties()
                 {
                     PixelFormat = new D2D.PixelFormat(DXGI.Format.Unknown, D2D.AlphaMode.Premultiplied),
                 });

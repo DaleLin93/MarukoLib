@@ -32,7 +32,7 @@ namespace MarukoLib.Lang
                 {
                     get
                     {
-                        if (_currentIndex < 0 || _currentIndex >= _intRange._totalCount)
+                        if (_currentIndex < 0 || _currentIndex >= _intRange.Count)
                             return default;
                         return _intRange._startInclusive + _currentIndex * _intRange._increment;
                     }
@@ -40,7 +40,7 @@ namespace MarukoLib.Lang
 
                 object IEnumerator.Current => Current;
 
-                public bool MoveNext() => ++_currentIndex < _intRange._totalCount;
+                public bool MoveNext() => ++_currentIndex < _intRange.Count;
 
                 public void Reset() => _currentIndex = -1;
 
@@ -48,16 +48,16 @@ namespace MarukoLib.Lang
 
             }
 
-            private readonly int _startInclusive, _increment, _totalCount;
+            private readonly int _startInclusive, _increment;
 
             public IntRange(int start, bool includeStart, int end, bool includeEnd)
             {
-                _increment = (end > start) ? +1 : -1;
+                _increment = end > start ? +1 : -1;
                 _startInclusive = start + (includeStart ? 0 : _increment);
-                _totalCount = System.Math.Abs(end + (includeEnd ? _increment : 0) - _startInclusive);
+                Count = Math.Abs(end + (includeEnd ? _increment : 0) - _startInclusive);
             }
 
-            public int Count => _totalCount;
+            public int Count { get; }
 
             public IEnumerator<int> GetEnumerator() => new Enumerator(this);
 
@@ -107,7 +107,7 @@ namespace MarukoLib.Lang
                 _startInclusive =  (decimal)start + (includeStart ? 0M : _increment);
 
                 var endDecimal = (decimal)end;
-                var count = (int) Math.Floor(Math.Abs(endDecimal - _startInclusive) / System.Math.Abs(_increment)) + 1;
+                var count = (int) Math.Floor(Math.Abs(endDecimal - _startInclusive) / Math.Abs(_increment)) + 1;
                 if ((double) (_startInclusive + count * _increment) == end && includeEnd)
                     count++;
                 Count = count;

@@ -901,7 +901,7 @@ namespace MarukoLib.LabStreamingLayer
         {
             public LostException() { }
             public LostException(string message) { }
-            public LostException(string message, System.Exception inner) { }
+            public LostException(string message, Exception inner) { }
             protected LostException(System.Runtime.Serialization.SerializationInfo info,
                 System.Runtime.Serialization.StreamingContext context)
             { }

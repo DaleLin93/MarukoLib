@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace MarukoLib.Lang.Sequence
@@ -19,24 +18,28 @@ namespace MarukoLib.Lang.Sequence
             Weight = weight;
         }
 
-        public static decimal SumOfWeight(params RandomTarget<T>[] targets) => SumOfWeight((IReadOnlyCollection<RandomTarget<T>>)targets);
-
-        public static decimal SumOfWeight(IReadOnlyCollection<RandomTarget<T>> targets) =>
-            (from target in targets let rate = Math.Abs(target.Weight) where !(rate <= 0) select target.Weight).Sum();
-
-        public static RandomTarget<T>[] Normalize(params RandomTarget<T>[] targets) => Normalize((IReadOnlyCollection<RandomTarget<T>>)targets);
-
-        public static RandomTarget<T>[] Normalize(IReadOnlyCollection<RandomTarget<T>> targets)
-        {
-            var sum = SumOfWeight(targets);
-            return targets.Select(target => new RandomTarget<T>(target.Value, target.Weight / sum)).ToArray();
-        }
-
         public T Value { get; }
 
         public decimal Weight { get; }
 
         public override string ToString() => $"RandomTarget{{{nameof(Value)}={Value}, {nameof(Weight)}={Weight}}}";
+
+    }
+
+    public static class RandomTargetExt
+    {
+
+        public static decimal SumOfWeight<T>(params RandomTarget<T>[] targets) 
+            => SumOfWeight((IReadOnlyCollection<RandomTarget<T>>)targets);
+
+        public static decimal SumOfWeight<T>(this IReadOnlyCollection<RandomTarget<T>> targets) 
+            => (from target in targets let rate = Math.Abs(target.Weight) where !(rate <= 0) select target.Weight).Sum();
+
+        public static RandomTarget<T>[] Normalize<T>(params RandomTarget<T>[] targets) 
+            => Normalize((IReadOnlyCollection<RandomTarget<T>>)targets);
+
+        public static RandomTarget<T>[] Normalize<T>(this IReadOnlyCollection<RandomTarget<T>> targets) 
+            => targets.Select(target => new RandomTarget<T>(target.Value, target.Weight / SumOfWeight(targets))).ToArray();
 
     }
 
@@ -54,7 +57,7 @@ namespace MarukoLib.Lang.Sequence
         public RandomSequence(int seed, params RandomTarget<T>[] targets)
         {
             _r = new Random(seed);
-            var normalizedTargets = RandomTarget<T>.Normalize(targets);
+            var normalizedTargets = targets.Normalize();
             TargetCount = normalizedTargets.Length;
             _targetValues = new T[TargetCount];
             _targetBounds = new decimal[TargetCount];
@@ -102,7 +105,7 @@ namespace MarukoLib.Lang.Sequence
         public PseduoRandomSequence(int seed, int? roundSize, decimal randomness, params RandomTarget<T>[] targets)
         {
             _r = new Random(seed);
-            var normalizedTargets = RandomTarget<T>.Normalize(targets);
+            var normalizedTargets = targets.Normalize();
             var minRate = normalizedTargets.Length == 0 ? 0 : normalizedTargets.Min(target => Math.Abs(target.Weight));
             var actualRoundSize = roundSize ?? 1 / minRate;
             TargetCount = normalizedTargets.Length;
@@ -132,7 +135,7 @@ namespace MarukoLib.Lang.Sequence
                 roundSum += remainingCount;
                 choices++;
             }
-            Debug.Assert(choices > 0);
+            System.Diagnostics.Debug.Assert(choices > 0);
             decimal accumulated = 0;
             var lastIndex = -1;
             for (var i = 0; i < TargetCount; i++)

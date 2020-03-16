@@ -42,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Filters\MAFilter.cs" />
     <Compile Include="FuncUtils.cs" />
     <Compile Include="ActionUtils.cs" />
     <Compile Include="ArrayQuery.cs" />
