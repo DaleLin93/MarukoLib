@@ -14,7 +14,11 @@ namespace MarukoLib.Lang
 
         private readonly LinkedList<IDisposable> _disposables = new LinkedList<IDisposable>();
 
+        public DisposablePool(bool disposeQuietly = true) => Quietly = disposeQuietly;
+
         ~DisposablePool() => DisposeAll();
+
+        public bool Quietly { get; }
 
         public bool AddIfDisposable(object obj)
         {
@@ -34,7 +38,10 @@ namespace MarukoLib.Lang
             lock (_disposables)
             {
                 foreach (var disposable in _disposables)
-                    disposable.Dispose();
+                    if (Quietly)
+                        ActionUtils.InvokeQuietly(disposable.Dispose);
+                    else
+                        disposable.Dispose();
                 _disposables.Clear();
             }
         }
