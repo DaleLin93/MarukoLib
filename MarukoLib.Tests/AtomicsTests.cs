@@ -91,10 +91,12 @@ namespace MarukoLib.Tests
         [TestMethod]
         public void TestAtomicEnum()
         {
-            var atomicEnum = new Atomic<EventResetMode>(EventResetMode.ManualReset);
+            var atomicEnum = new AtomicEnum<EventResetMode>(EventResetMode.ManualReset);
             Assert.AreEqual(EventResetMode.ManualReset, atomicEnum.Get());
             Assert.IsFalse(atomicEnum.CompareAndSet(EventResetMode.AutoReset, EventResetMode.ManualReset));
             Assert.AreEqual(EventResetMode.ManualReset, atomicEnum.Get());
+            Assert.IsTrue(atomicEnum.CompareAndSet(EventResetMode.ManualReset, EventResetMode.AutoReset));
+            Assert.IsTrue(atomicEnum.CompareAndSet(EventResetMode.AutoReset, EventResetMode.ManualReset));
             Assert.IsTrue(atomicEnum.CompareAndSet(EventResetMode.ManualReset, EventResetMode.AutoReset));
             Assert.AreEqual(EventResetMode.AutoReset, atomicEnum.Get());
         }

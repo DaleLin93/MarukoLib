@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
@@ -527,6 +528,67 @@ namespace MarukoLib.Lang.Concurrent
 
     }
 
+    public sealed class AtomicEnum<T> : AbstractAtomic<T> where T : Enum
+    {
+
+        private static readonly IReadOnlyDictionary<T, Enum> EnumDictionary;
+
+        private Enum _value;
+
+        static AtomicEnum()
+        {
+            var dictionary = new Dictionary<T, Enum>();
+            foreach (var enumValue in EnumUtils.GetEnumValues<T>())
+                dictionary[enumValue] = enumValue;
+            EnumDictionary = dictionary;
+        }
+
+        public AtomicEnum(T defaultValue) => Interlocked.Exchange(ref _value, EnumDictionary[defaultValue]);
+
+        /// <summary>
+        /// Get or set value.
+        /// </summary>
+        public T Value
+        {
+            get => Get();
+            set => Set(value);
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override T Get() => (T) Interlocked.CompareExchange(ref _value, null, null);
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override T Set(T value) => (T) Interlocked.Exchange(ref _value, EnumDictionary[value]);
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override bool CompareAndSet(T oldValue, T newValue)
+        {
+            Enum oldEnum = EnumDictionary[oldValue], newEnum = EnumDictionary[newValue];
+            return ReferenceEquals(Interlocked.CompareExchange(ref _value, newEnum, oldEnum), oldEnum);
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
+        public override void Compute(UnaryOperator<T> @operator, out T oldValue, out T newValue)
+        {
+            for (; ; )
+            {
+                newValue = @operator(oldValue = Get());
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
+                if (Equals(oldValue, newValue)) return;
+                if (CompareAndSet(oldValue, newValue)) return;
+            }
+        }
+
+    }
+
     public sealed class Atomic<T> : AbstractAtomic<T>
     {
 
@@ -546,6 +608,9 @@ namespace MarukoLib.Lang.Concurrent
             _value = defaultValue;
         }
 
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
         public override T Get()
         {
             _lock.EnterReadLock();
@@ -554,6 +619,9 @@ namespace MarukoLib.Lang.Concurrent
             return value;
         }
 
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
         public override T Set(T value)
         {
             _lock.EnterWriteLock();
@@ -563,6 +631,9 @@ namespace MarukoLib.Lang.Concurrent
             return oldValue;
         }
 
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
         public override bool CompareAndSet(T oldValue, T newValue)
         {
             var flag = false;
@@ -582,6 +653,9 @@ namespace MarukoLib.Lang.Concurrent
             return flag;
         }
 
+        /// <summary>
+        /// <inheritdoc cref="IAtomic{T}"/>
+        /// </summary>
         public override void Compute(UnaryOperator<T> @operator, out T oldValue, out T newValue)
         {
             _lock.EnterWriteLock();
@@ -596,6 +670,29 @@ namespace MarukoLib.Lang.Concurrent
         }
 
         private bool IsEqual(T a, T b) => _compareRef ? ReferenceEquals(a, b) : Equals(a, b);
+
+    }
+
+    public static class Atomics
+    {
+
+        public static AtomicBool Bool(bool defaultValue = default) => new AtomicBool(defaultValue);
+
+        public static AtomicInt Int(int defaultValue = default) => new AtomicInt(defaultValue);
+
+        public static AtomicLong Long(long defaultValue = default) => new AtomicLong(defaultValue);
+
+        public static AtomicSingle Single(float defaultValue = default) => new AtomicSingle(defaultValue);
+
+        public static AtomicDouble Double(double defaultValue = default) => new AtomicDouble(defaultValue);
+
+        public static AtomicPtr Ptr(IntPtr defaultValue = default) => new AtomicPtr(defaultValue);
+
+        public static AtomicEnum<T> Enum<T>(T defaultValue = default) where T : Enum => new AtomicEnum<T>(defaultValue);
+
+        public static AtomicReference<T> Reference<T>(T defaultValue = default) where T : class => new AtomicReference<T>(defaultValue);
+
+        public static Atomic<T> Heavy<T>(T defaultValue = default) where T : class => new Atomic<T>(defaultValue);
 
     }
 
