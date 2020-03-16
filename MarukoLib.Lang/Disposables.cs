@@ -46,50 +46,14 @@ namespace MarukoLib.Lang
         }
     }
 
-    public abstract class Disposable<T> : IDisposable
+    public sealed class NoOpDisposable : IDisposable
     {
 
-        public sealed class Delegated : Disposable<T>
-        {
+        public static readonly NoOpDisposable Instance = new NoOpDisposable();
 
-            public Delegated(T value, [NotNull] Action<T> disposalAction) : base(value) => DisposalAction = disposalAction ?? throw new ArgumentNullException(nameof(disposalAction));
+        private NoOpDisposable() { }
 
-            [NotNull] public Action<T> DisposalAction { get; }
-
-            protected override void Dispose(bool deconstruct) => DisposalAction(Value);
-
-        }
-
-        public sealed class NoAction : Disposable<T>
-        {
-
-            public NoAction(T value) : base(value) { }
-
-            protected override void Dispose(bool deconstruct) { }
-
-        }
-
-        private bool _disposed = false;
-
-        protected Disposable(T value) => Value = value;
-
-        ~Disposable() => Dispose0(true);
-
-        [NotNull] public T Value { get; }
-
-        public void Dispose() => Dispose0(false);
-
-        protected abstract void Dispose(bool deconstruct);
-
-        private void Dispose0(bool deconstruct)
-        {
-            lock (this)
-                if (!_disposed)
-                {
-                    Dispose(deconstruct);
-                    _disposed = true;
-                }
-        }
+        public void Dispose() { }
 
     }
 
@@ -117,6 +81,64 @@ namespace MarukoLib.Lang
         {
             if (_disposed.CompareAndSet(false, true)) _delegate();
         }
+
+    }
+
+    public abstract class Disposable<T> : IDisposable
+    {
+
+        public sealed class Delegated : Disposable<T>
+        {
+
+            public Delegated(T value, [NotNull] Action<T> disposalAction) : base(value) => DisposalAction = disposalAction ?? throw new ArgumentNullException(nameof(disposalAction));
+
+            [NotNull] public Action<T> DisposalAction { get; }
+
+            protected override void Dispose(bool deconstruct) => DisposalAction(Value);
+
+        }
+
+        public sealed class NoOp : Disposable<T>
+        {
+
+            public NoOp(T value) : base(value) { }
+
+            protected override void Dispose(bool deconstruct) { }
+
+        }
+
+        private bool _disposed;
+
+        protected Disposable(T value) => Value = value;
+
+        ~Disposable() => Dispose0(true);
+
+        public static Disposable<T> Of([CanBeNull] T value, [CanBeNull] Action<T> disposalAction) 
+            => disposalAction == null ? (Disposable<T>) new NoOp(value) : new Delegated(value, disposalAction);
+
+        [NotNull] public T Value { get; }
+
+        public void Dispose() => Dispose0(false);
+
+        protected abstract void Dispose(bool deconstruct);
+
+        private void Dispose0(bool deconstruct)
+        {
+            lock (this)
+                if (!_disposed)
+                {
+                    Dispose(deconstruct);
+                    _disposed = true;
+                }
+        }
+
+    }
+
+    public static class Disposables
+    {
+
+        public static IDisposable For(Action action) => action == null ? (IDisposable) NoOpDisposable.Instance : new DelegatedDisposable(action, true);
+
     }
 
 }

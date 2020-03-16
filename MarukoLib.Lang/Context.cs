@@ -354,12 +354,15 @@ namespace MarukoLib.Lang
         {
             if (observer == null) throw new ArgumentNullException(nameof(observer));
             lock (_observers)
-                _observers.Add(observer);
-            return new DelegatedDisposable(() =>
-            {
-                lock (_observers)
-                    _observers.Remove(observer);
-            }, false);
+                if (!_observers.Contains(observer))
+                    _observers.Add(observer);
+            return new DelegatedDisposable(() => Unsubscribe(observer), false);
+        }
+
+        public bool Unsubscribe(IObserver<IContextProperty> observer)
+        {
+            if (observer == null) throw new ArgumentNullException(nameof(observer));
+            lock (_observers) return _observers.Remove(observer);
         }
 
         public bool TryGet(IContextProperty property, out object result) => _context.TryGet(property, out result);

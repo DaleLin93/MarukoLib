@@ -7,9 +7,11 @@ namespace MarukoLib.Lang
     public static class DictionaryUtils
     {
 
-        public static IDictionary<TK,TV> AsDictionary<TK, TV>(this IReadOnlyDictionary<TK, TV> dict)
+        public static IDictionary<TK, TV> AsDictionary<TK, TV>(this IReadOnlyDictionary<TK, TV> dict) 
+            => dict is IDictionary<TK, TV> d ? d : CopyOfDictionary(dict);
+
+        public static IDictionary<TK, TV> CopyOfDictionary<TK, TV>(this IReadOnlyDictionary<TK, TV> dict)
         {
-            if (dict is IDictionary<TK, TV> d) return d;
             var dictionary = new Dictionary<TK, TV>();
             dictionary.AddAll(dict);
             return dictionary;

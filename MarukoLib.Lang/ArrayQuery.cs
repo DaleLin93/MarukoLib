@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using JetBrains.Annotations;
 
@@ -137,6 +138,7 @@ namespace MarukoLib.Lang
             return expressions;
         }
 
+        [SuppressMessage("ReSharper", "ArgumentsStyleOther")]
         private static IExpression ParseExpression(string expression)
         {
             int colonIndex;
@@ -161,14 +163,14 @@ namespace MarukoLib.Lang
                     rPart = expression.Substring(secondColonIndex + 1).Trim();
                 }
                 return new RangeExpression(
-                    lPart.IsBlank() ? DependentValue.StartValue : ParseValue(lPart),
-                    rPart.IsBlank() ? DependentValue.EndValue : ParseValue(rPart),
-                    mPart == null ? null : ParseValue(mPart));
+                    startValue: lPart.IsBlank() ? DependentValue.StartValue : ParseValue(lPart),
+                    endValue: rPart.IsBlank() ? DependentValue.EndValue : ParseValue(rPart), 
+                    stepValue: mPart == null ? null : ParseValue(mPart));
             }
             return new ValueExpression(ParseValue(expression));
         }
 
-        private static IValue ParseValue(string value)
+        private static IValue ParseValue([NotNull] string value)
         {
             switch (value)
             {
@@ -183,7 +185,7 @@ namespace MarukoLib.Lang
 
         public string Query { get; }
 
-        public IReadOnlyCollection<double> Enumerate(double lowerbound, double upperbound) => Enumerate(new Pair<double>(lowerbound, upperbound), true);
+        public IReadOnlyCollection<double> Enumerate(double lowerBound, double upperBound) => Enumerate(new Pair<double>(lowerBound, upperBound), true);
 
         public IReadOnlyCollection<double> Enumerate() => Enumerate(null, false);
 
@@ -196,7 +198,7 @@ namespace MarukoLib.Lang
                     .AsReadonlyCollection(array.Count + current.Count);
             });
 
-        public IReadOnlyCollection<T> Enumerate<T>(T lowerbound, T upperbound, ITypeConverter<double, T> converter) => Enumerate(new Pair<T>(lowerbound, upperbound), true, converter);
+        public IReadOnlyCollection<T> Enumerate<T>(T lowerBound, T upperBound, ITypeConverter<double, T> converter) => Enumerate(new Pair<T>(lowerBound, upperBound), true, converter);
 
         public IReadOnlyCollection<T> Enumerate<T>(ITypeConverter<double, T> converter) => Enumerate(null, false, converter);
 
@@ -220,9 +222,11 @@ namespace MarukoLib.Lang
 
         public readonly ITypeConverter<double, T> Converter;
 
-        public ArrayQuery(string query, ITypeConverter<double, T> typeConverter)
+        public ArrayQuery(string query, ITypeConverter<double, T> typeConverter) : this(new ArrayQuery(query), typeConverter) { }
+
+        public ArrayQuery(ArrayQuery query, ITypeConverter<double, T> typeConverter)
         {
-            BaseQuery = new ArrayQuery(query ?? throw new ArgumentNullException(nameof(query)));
+            BaseQuery = query ?? throw new ArgumentNullException(nameof(query));
             Converter = typeConverter;
         }
 
@@ -231,7 +235,7 @@ namespace MarukoLib.Lang
 
         public string Query => BaseQuery.Query;
 
-        public IReadOnlyCollection<T> Enumerate(T lowerbound, T upperbound) => BaseQuery.Enumerate(lowerbound, upperbound, Converter);
+        public IReadOnlyCollection<T> Enumerate(T lowerBound, T upperBound) => BaseQuery.Enumerate(lowerBound, upperBound, Converter);
 
         public IReadOnlyCollection<T> Enumerate() => BaseQuery.Enumerate(Converter);
 
