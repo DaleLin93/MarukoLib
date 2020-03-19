@@ -95,6 +95,7 @@
   <ItemGroup>
     <Compile Include="Image\BitmapUtils.cs" />
     <Compile Include="IO\ByteArrayStream.cs" />
+    <Compile Include="Net\RequestUtils.cs" />
     <Compile Include="UI\ControlUtils.cs" />
     <Compile Include="UI\CursorUtils.cs" />
     <Compile Include="Crypt\Base64Utils.cs" />
@@ -112,7 +113,7 @@
     <Compile Include="UI\DispatchingUtils.cs" />
     <Compile Include="UI\ScreenInfo.cs" />
     <Compile Include="UI\UIExtensions.cs" />
-    <Compile Include="Windows\MessageBoxUtils.cs" />
+    <Compile Include="Windows\MsgBoxUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="JetBrains.Annotations">
