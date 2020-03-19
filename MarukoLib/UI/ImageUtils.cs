@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Net;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
@@ -15,7 +16,7 @@ namespace MarukoLib.UI
 
         public static System.Drawing.Image ReadFromUrl(Uri uri)
         {
-            var request = System.Net.WebRequest.Create(uri);
+            var request = WebRequest.Create(uri);
             using (var response = request.GetResponse())
             using (var stream = response.GetResponseStream() ?? throw new ArgumentException($"uri: {uri}"))
                 return System.Drawing.Image.FromStream(stream);

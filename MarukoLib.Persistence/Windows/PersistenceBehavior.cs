@@ -76,7 +76,7 @@ namespace MarukoLib.Persistence.Windows
             protected static readonly IReadOnlyCollection<InternalResolver> Resolvers = new[]
             {
                 InternalResolver.Create<TextBox>(textBox => new DependencyPropertyAccessor(TextBox.TextProperty, textBox)),
-                InternalResolver.Create<CheckBox>(checkBox => new DependencyPropertyAccessor(ToggleButton.IsCheckedProperty, checkBox)),
+                InternalResolver.Create<CheckBox>(checkBox => new DependencyPropertyAccessor(ToggleButton.IsCheckedProperty, checkBox))
             };
 
             protected static void Resolve(Dictionary<string, IValueAccessor> output, object value)
@@ -113,7 +113,7 @@ namespace MarukoLib.Persistence.Windows
 
             public Serializable Resolve(object obj)
             {
-                if (!(obj is DependencyObject)) throw new ArgumentException($"Input value must be a DependencyObject.");
+                if (!(obj is DependencyObject)) throw new ArgumentException("Input value must be a DependencyObject.");
                 var dict = new Dictionary<string, IValueAccessor>();
                 Resolve(dict, obj);
                 return new Serializable(new DictionaryAccessor(dict));

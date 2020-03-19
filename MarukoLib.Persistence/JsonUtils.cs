@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Text;
 using MarukoLib.Logging;
 using Newtonsoft.Json;
@@ -15,6 +16,8 @@ namespace MarukoLib.Persistence
 
         public static JsonSerializerSettings PrettyFormat = new JsonSerializerSettings {Formatting = Formatting.Indented};
 
+        public static JsonSerializerSettings Pretty = PrettyFormat;
+
         public static T DeserializeFromFile<T>(string file, JsonSerializerSettings settings = null, Encoding encoding = null)
         {
             TryDeserializeFromFile<T>(file, out var result, settings, encoding);
@@ -23,11 +26,11 @@ namespace MarukoLib.Persistence
 
         public static bool TryDeserializeFromFile<T>(string file, out T result, JsonSerializerSettings settings = null, Encoding encoding = null)
         {
-            if (System.IO.File.Exists(file))
+            if (File.Exists(file))
             {
                 try
                 {
-                    result = Deserialize<T>(System.IO.File.ReadAllText(file, encoding ?? DefaultEncoding), settings);
+                    result = Deserialize<T>(File.ReadAllText(file, encoding ?? DefaultEncoding), settings);
                     return true;
                 }
                 catch (Exception e)
@@ -35,7 +38,7 @@ namespace MarukoLib.Persistence
                     Logger.Error("TryDeserializeFromFile", e, "file", file);
                 }
             }
-            result = default(T);
+            result = default;
             return false;
         }
 
@@ -47,11 +50,11 @@ namespace MarukoLib.Persistence
 
         public static bool TryDeserializeFromFile(string file, Type type, out object result, JsonSerializerSettings settings = null, Encoding encoding = null)
         {
-            if (System.IO.File.Exists(file))
+            if (File.Exists(file))
             {
                 try
                 {
-                    result = Deserialize(System.IO.File.ReadAllText(file, encoding ?? DefaultEncoding), type, settings);
+                    result = Deserialize(File.ReadAllText(file, encoding ?? DefaultEncoding), type, settings);
                     return true;
                 }
                 catch (Exception e)
@@ -73,7 +76,7 @@ namespace MarukoLib.Persistence
         {
             try
             {
-                System.IO.File.WriteAllText(file, Serialize(val, settings), encoding ?? DefaultEncoding);
+                File.WriteAllText(file, Serialize(val, settings), encoding ?? DefaultEncoding);
                 return true;
             }
             catch (Exception e)

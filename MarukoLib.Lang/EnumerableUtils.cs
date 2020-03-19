@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
+using MarukoLib.Lang.Collections;
 
 namespace MarukoLib.Lang
 {
@@ -12,68 +14,53 @@ namespace MarukoLib.Lang
     {
 
         [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-        public static IReadOnlyCollection<T> AsReadonlyCollection<T>(this IEnumerable<T> enumerable)
+        public static IReadOnlyCollection<T> AsReadonlyCollection<T>([NotNull] this IEnumerable<T> enumerable)
         {
-            if (enumerable is ICollection<T> collection) return CollectionUtils.AsReadonly(collection);
+            if (enumerable is ICollection<T> collection) return collection.AsReadonly();
             return AsReadonlyCollection(enumerable, enumerable.Count());
         }
 
-        public static IReadOnlyCollection<T> AsReadonlyCollection<T>(this IEnumerable<T> enumerable, int count)
+        public static IReadOnlyCollection<T> AsReadonlyCollection<T>([NotNull] this IEnumerable<T> enumerable, int count)
             => new CollectionUtils.ReadonlyCollection<T>(count, enumerable);
 
-        public static TR Collect<T, TR>(this ICollection<T> collection, TR value) where TR : T
+        public static IEnumerable<T> Enumerate<T>(int count, [NotNull] Func<int, T> func)
         {
-            collection.Add(value);
-            return value;
-        }
-
-        public static IEnumerable<T> Enumerate<T>(int total, Func<int, T> func)
-        {
-            for (var i = 0; i < total; i++)
+            for (var i = 0; i < count; i++)
                 yield return func(i);
         }
 
-        public static int Count(this IEnumerable enumerable) => Enumerable.Count(enumerable.Cast<object>());
+        public static int Count([NotNull] this IEnumerable enumerable) => Enumerable.Count(enumerable.Cast<object>());
 
-        public static IEnumerable<T> Filter<T>(this IEnumerable<T> enumerable, Func<T, bool> filter) => enumerable.Where(filter);
+        public static IEnumerable<T> Not<T>([NotNull] this IEnumerable<T> enumerable, [NotNull] Predicate<T> predicate) => enumerable.Where(t => !predicate(t));
 
-        public static string Join<T>(this IEnumerable<T> enumerable, string separator, Func<T, object> convertFunc = null)
+        public static string Join<T>([NotNull] this IEnumerable<T> enumerable, [NotNull] string separator, [CanBeNull] Func<T, object> convertFunc = null)
         {
-            if (convertFunc == null)
-                convertFunc = t => t;
-
+            if (convertFunc == null) convertFunc = t => t;
             var builder = new StringBuilder();
             foreach (var item in enumerable)
             {
-                if (builder.Length > 0)
-                    builder.Append(separator);
+                if (builder.Length > 0) builder.Append(separator);
                 builder.Append(convertFunc(item));
             }
-
             return builder.ToString();
         }
 
-        public static IEnumerable<IReadOnlyCollection<T>> MovingWindows<T>(this IEnumerable<T> values, uint windowSize, double overlap)
+        public static IEnumerable<IReadOnlyList<T>> MovingWindows<T>([NotNull] this IEnumerable<T> values, uint windowSize, double overlap)
         {
-            if (windowSize == 0) throw new ArgumentException("window size must be positive");
+            if (windowSize <= 0) throw new ArgumentException("window size must be positive");
             if (overlap < 0 || overlap >= 1) throw new ArgumentException("overlap must in range of [0, 1)");
             var overlapSize = Math.Min((uint)(windowSize * overlap), windowSize - 1);
             var windowStep = windowSize - overlapSize;
-            var samples = new LinkedList<T>();
+            var samples = new CircularFifoBuffer<T>(windowSize);
             uint counter = 0;
             foreach (var value in values)
             {
-                samples.AddLast(value);
+                samples.Add(value);
                 counter++;
-                if (samples.Count >= windowSize)
+                if (samples.Count >= windowSize && counter >= windowStep)
                 {
-                    if (samples.Count > windowSize)
-                        samples.RemoveFirst();
-                    if (counter >= windowStep)
-                    {
-                        counter = 0;
-                        yield return samples.AsReadonly();
-                    }
+                    counter = 0;
+                    yield return samples;
                 }
             }
         }

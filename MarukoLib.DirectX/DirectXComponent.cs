@@ -4,13 +4,13 @@ using System.Windows;
 using MarukoLib.Interop;
 using Microsoft.Win32;
 using SharpDX;
+using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
+using SharpDX.DXGI;
+using SharpDX.WIC;
 using Device = SharpDX.Direct3D11.Device;
-using DXGI = SharpDX.DXGI;
 using MapFlags = SharpDX.Direct3D11.MapFlags;
 using Resource = SharpDX.Direct3D11.Resource;
-using WIC = SharpDX.WIC;
-using Result = SharpDX.Result;
 
 namespace MarukoLib.DirectX
 {
@@ -22,9 +22,9 @@ namespace MarukoLib.DirectX
 
         public Device Device => _device;
 
-        private DXGI.SwapChain _swapChain;
+        private SwapChain _swapChain;
 
-        protected DXGI.SwapChain SwapChain => _swapChain;
+        protected SwapChain SwapChain => _swapChain;
 
         private Texture2D _backBuffer;
 
@@ -47,55 +47,55 @@ namespace MarukoLib.DirectX
             SurfaceWidth = (int)(ActualWidth < 0 ? 0 : Math.Ceiling(ActualWidth * DpiScale));
             SurfaceHeight = (int)(ActualHeight < 0 ? 0 : Math.Ceiling(ActualHeight * DpiScale));
 
-            var swapChainDescription = new DXGI.SwapChainDescription {
+            var swapChainDescription = new SwapChainDescription {
                 OutputHandle = Hwnd,
                 BufferCount = 2,
-                Flags = DXGI.SwapChainFlags.AllowModeSwitch,
+                Flags = SwapChainFlags.AllowModeSwitch,
                 IsWindowed = true,
-                ModeDescription = new DXGI.ModeDescription(SurfaceWidth, SurfaceHeight, new DXGI.Rational(60, 1), DXGI.Format.B8G8R8A8_UNorm),
-                SampleDescription = new DXGI.SampleDescription(1, 0),
-                SwapEffect = DXGI.SwapEffect.Discard,
-                Usage = DXGI.Usage.RenderTargetOutput | DXGI.Usage.Shared
+                ModeDescription = new ModeDescription(SurfaceWidth, SurfaceHeight, new Rational(60, 1), Format.B8G8R8A8_UNorm),
+                SampleDescription = new SampleDescription(1, 0),
+                SwapEffect = SwapEffect.Discard,
+                Usage = Usage.RenderTargetOutput | Usage.Shared
             };
 
-            SharpDX.Direct3D.FeatureLevel[] featureLevels = null;
+            FeatureLevel[] featureLevels = null;
 
             if (VersionHelper.IsWindows10OrGreater()) {
                 featureLevels = new[]
                 {
-                    SharpDX.Direct3D.FeatureLevel.Level_12_1,
-                    SharpDX.Direct3D.FeatureLevel.Level_12_0,
-                    SharpDX.Direct3D.FeatureLevel.Level_11_1,
-                    SharpDX.Direct3D.FeatureLevel.Level_11_0,
-                    SharpDX.Direct3D.FeatureLevel.Level_10_1,
-                    SharpDX.Direct3D.FeatureLevel.Level_10_0,
-                    SharpDX.Direct3D.FeatureLevel.Level_9_3,
-                    SharpDX.Direct3D.FeatureLevel.Level_9_2,
-                    SharpDX.Direct3D.FeatureLevel.Level_9_1
+                    FeatureLevel.Level_12_1,
+                    FeatureLevel.Level_12_0,
+                    FeatureLevel.Level_11_1,
+                    FeatureLevel.Level_11_0,
+                    FeatureLevel.Level_10_1,
+                    FeatureLevel.Level_10_0,
+                    FeatureLevel.Level_9_3,
+                    FeatureLevel.Level_9_2,
+                    FeatureLevel.Level_9_1
                 };
             } else if (VersionHelper.IsWindows7SP1OrGreater()) {
                 featureLevels = new[]
                 {
-                    SharpDX.Direct3D.FeatureLevel.Level_11_1,
-                    SharpDX.Direct3D.FeatureLevel.Level_11_0,
-                    SharpDX.Direct3D.FeatureLevel.Level_10_1,
-                    SharpDX.Direct3D.FeatureLevel.Level_10_0,
-                    SharpDX.Direct3D.FeatureLevel.Level_9_3,
-                    SharpDX.Direct3D.FeatureLevel.Level_9_2,
-                    SharpDX.Direct3D.FeatureLevel.Level_9_1
+                    FeatureLevel.Level_11_1,
+                    FeatureLevel.Level_11_0,
+                    FeatureLevel.Level_10_1,
+                    FeatureLevel.Level_10_0,
+                    FeatureLevel.Level_9_3,
+                    FeatureLevel.Level_9_2,
+                    FeatureLevel.Level_9_1
                 };
             }
 
             try {
-                Device.CreateWithSwapChain(SharpDX.Direct3D.DriverType.Hardware,
+                Device.CreateWithSwapChain(DriverType.Hardware,
                     DeviceCreationFlags.BgraSupport, featureLevels, swapChainDescription,
                     out _device, out _swapChain);
             } catch (Exception e) {
                 MessageBox.Show(e.ToString());
             }
 
-            using (var factory = _swapChain.GetParent<DXGI.Factory>()) {
-                factory.MakeWindowAssociation(Hwnd, DXGI.WindowAssociationFlags.IgnoreAll);
+            using (var factory = _swapChain.GetParent<Factory>()) {
+                factory.MakeWindowAssociation(Hwnd, WindowAssociationFlags.IgnoreAll);
             }
 
             _backBuffer = _swapChain.GetBackBuffer<Texture2D>(0);
@@ -132,7 +132,7 @@ namespace MarukoLib.DirectX
             D3DSizeStartChange?.Invoke(this, new EventArgs());
             BeforeResize();
             try {
-                _swapChain.ResizeBuffers(0, 0, 0, DXGI.Format.Unknown, DXGI.SwapChainFlags.None);
+                _swapChain.ResizeBuffers(0, 0, 0, Format.Unknown, SwapChainFlags.None);
             } catch (SharpDXException e) {
                 MessageBox.Show(e.ToString());
             }
@@ -156,7 +156,7 @@ namespace MarukoLib.DirectX
         }
 
         protected virtual void EndRender() {
-            _swapChain.Present(1, DXGI.PresentFlags.None);
+            _swapChain.Present(1, PresentFlags.None);
         }
 
         protected abstract void Render();
@@ -181,17 +181,17 @@ namespace MarukoLib.DirectX
 
             switch (ext) {
                 case ".png":
-                    format = WIC.ContainerFormatGuids.Png;
+                    format = ContainerFormatGuids.Png;
                     break;
                 case ".jpg":
                 case ".jpeg":
-                    format = WIC.ContainerFormatGuids.Jpeg;
+                    format = ContainerFormatGuids.Jpeg;
                     break;
                 case ".tiff":
-                    format = WIC.ContainerFormatGuids.Tiff;
+                    format = ContainerFormatGuids.Tiff;
                     break;
                 default:
-                    format = WIC.ContainerFormatGuids.Png;
+                    format = ContainerFormatGuids.Png;
                     break;
             }
 
@@ -202,15 +202,15 @@ namespace MarukoLib.DirectX
         public string SupportLevel {
             get {
                 switch (_device.FeatureLevel) {
-                    case SharpDX.Direct3D.FeatureLevel.Level_12_1:
-                    case SharpDX.Direct3D.FeatureLevel.Level_12_0:
-                    case SharpDX.Direct3D.FeatureLevel.Level_11_1:
-                    case SharpDX.Direct3D.FeatureLevel.Level_11_0:
-                    case SharpDX.Direct3D.FeatureLevel.Level_10_1:
-                    case SharpDX.Direct3D.FeatureLevel.Level_10_0:
-                    case SharpDX.Direct3D.FeatureLevel.Level_9_3:
-                    case SharpDX.Direct3D.FeatureLevel.Level_9_2:
-                    case SharpDX.Direct3D.FeatureLevel.Level_9_1:
+                    case FeatureLevel.Level_12_1:
+                    case FeatureLevel.Level_12_0:
+                    case FeatureLevel.Level_11_1:
+                    case FeatureLevel.Level_11_0:
+                    case FeatureLevel.Level_10_1:
+                    case FeatureLevel.Level_10_0:
+                    case FeatureLevel.Level_9_3:
+                    case FeatureLevel.Level_9_2:
+                    case FeatureLevel.Level_9_1:
                         return _device.FeatureLevel.ToString().Replace("Level_", "DirectX ").Replace('_', '.');
                     default:
                         return "DirectX Not Support";
@@ -228,10 +228,10 @@ namespace MarukoLib.DirectX
             if (staging == null) return;
 
             var fs = new FileStream(fileName, FileMode.Create);
-            var encoder = new WIC.BitmapEncoder(Direct2D.ImageFactory, guidContainerFormat);
+            var encoder = new BitmapEncoder(Direct2D.ImageFactory, guidContainerFormat);
             encoder.Initialize(fs);
 
-            var frameEncode = new WIC.BitmapFrameEncode(encoder);
+            var frameEncode = new BitmapFrameEncode(encoder);
             //IPropertyBag2
 
             frameEncode.Initialize();
@@ -242,43 +242,43 @@ namespace MarukoLib.DirectX
 
             //bool sRGB = false;
             switch (desc.Format) {
-                case DXGI.Format.R32G32B32A32_Float: pfGuid = WIC.PixelFormat.Format128bppRGBAFloat; break;
-                case DXGI.Format.R16G16B16A16_Float: pfGuid = WIC.PixelFormat.Format64bppRGBAHalf; break;
-                case DXGI.Format.R16G16B16A16_UNorm: pfGuid = WIC.PixelFormat.Format64bppRGBA; break;
-                case DXGI.Format.R10G10B10_Xr_Bias_A2_UNorm: pfGuid = WIC.PixelFormat.Format32bppRGBA1010102XR; break; // DXGI 1.1
-                case DXGI.Format.R10G10B10A2_UNorm: pfGuid = WIC.PixelFormat.Format32bppRGBA1010102; break;
-                case DXGI.Format.B5G5R5A1_UNorm: pfGuid = WIC.PixelFormat.Format16bppBGRA5551; break;
-                case DXGI.Format.B5G6R5_UNorm: pfGuid = WIC.PixelFormat.Format16bppBGR565; break;
-                case DXGI.Format.R32_Float: pfGuid = WIC.PixelFormat.Format32bppGrayFloat; break;
-                case DXGI.Format.R16_Float: pfGuid = WIC.PixelFormat.Format16bppGrayHalf; break;
-                case DXGI.Format.R16_UNorm: pfGuid = WIC.PixelFormat.Format16bppGray; break;
-                case DXGI.Format.R8_UNorm: pfGuid = WIC.PixelFormat.Format8bppGray; break;
-                case DXGI.Format.A8_UNorm: pfGuid = WIC.PixelFormat.Format8bppAlpha; break;
+                case Format.R32G32B32A32_Float: pfGuid = PixelFormat.Format128bppRGBAFloat; break;
+                case Format.R16G16B16A16_Float: pfGuid = PixelFormat.Format64bppRGBAHalf; break;
+                case Format.R16G16B16A16_UNorm: pfGuid = PixelFormat.Format64bppRGBA; break;
+                case Format.R10G10B10_Xr_Bias_A2_UNorm: pfGuid = PixelFormat.Format32bppRGBA1010102XR; break; // DXGI 1.1
+                case Format.R10G10B10A2_UNorm: pfGuid = PixelFormat.Format32bppRGBA1010102; break;
+                case Format.B5G5R5A1_UNorm: pfGuid = PixelFormat.Format16bppBGRA5551; break;
+                case Format.B5G6R5_UNorm: pfGuid = PixelFormat.Format16bppBGR565; break;
+                case Format.R32_Float: pfGuid = PixelFormat.Format32bppGrayFloat; break;
+                case Format.R16_Float: pfGuid = PixelFormat.Format16bppGrayHalf; break;
+                case Format.R16_UNorm: pfGuid = PixelFormat.Format16bppGray; break;
+                case Format.R8_UNorm: pfGuid = PixelFormat.Format8bppGray; break;
+                case Format.A8_UNorm: pfGuid = PixelFormat.Format8bppAlpha; break;
 
-                case DXGI.Format.R8G8B8A8_UNorm:
-                    pfGuid = WIC.PixelFormat.Format32bppRGBA;
+                case Format.R8G8B8A8_UNorm:
+                    pfGuid = PixelFormat.Format32bppRGBA;
                     break;
 
-                case DXGI.Format.R8G8B8A8_UNorm_SRgb:
-                    pfGuid = WIC.PixelFormat.Format32bppRGBA;
+                case Format.R8G8B8A8_UNorm_SRgb:
+                    pfGuid = PixelFormat.Format32bppRGBA;
                     //sRGB = true;
                     break;
 
-                case DXGI.Format.B8G8R8A8_UNorm: // DXGI 1.1
-                    pfGuid = WIC.PixelFormat.Format32bppBGRA;
+                case Format.B8G8R8A8_UNorm: // DXGI 1.1
+                    pfGuid = PixelFormat.Format32bppBGRA;
                     break;
 
-                case DXGI.Format.B8G8R8A8_UNorm_SRgb: // DXGI 1.1
-                    pfGuid = WIC.PixelFormat.Format32bppBGRA;
+                case Format.B8G8R8A8_UNorm_SRgb: // DXGI 1.1
+                    pfGuid = PixelFormat.Format32bppBGRA;
                     //sRGB = true;
                     break;
 
-                case DXGI.Format.B8G8R8X8_UNorm: // DXGI 1.1
-                    pfGuid = WIC.PixelFormat.Format32bppBGR;
+                case Format.B8G8R8X8_UNorm: // DXGI 1.1
+                    pfGuid = PixelFormat.Format32bppBGR;
                     break;
 
-                case DXGI.Format.B8G8R8X8_UNorm_SRgb: // DXGI 1.1
-                    pfGuid = WIC.PixelFormat.Format32bppBGR;
+                case Format.B8G8R8X8_UNorm_SRgb: // DXGI 1.1
+                    pfGuid = PixelFormat.Format32bppBGR;
                     //sRGB = true;
                     break;
 
@@ -287,24 +287,24 @@ namespace MarukoLib.DirectX
             }
 
             switch (desc.Format) {
-                case DXGI.Format.R32G32B32A32_Float:
-                case DXGI.Format.R16G16B16A16_Float:
-                    targetGuid = WIC.PixelFormat.Format24bppBGR;
+                case Format.R32G32B32A32_Float:
+                case Format.R16G16B16A16_Float:
+                    targetGuid = PixelFormat.Format24bppBGR;
                     break;
-                case DXGI.Format.R16G16B16A16_UNorm: targetGuid = WIC.PixelFormat.Format48bppBGR; break;
-                case DXGI.Format.B5G5R5A1_UNorm: targetGuid = WIC.PixelFormat.Format16bppBGR555; break;
-                case DXGI.Format.B5G6R5_UNorm: targetGuid = WIC.PixelFormat.Format16bppBGR565; break;
+                case Format.R16G16B16A16_UNorm: targetGuid = PixelFormat.Format48bppBGR; break;
+                case Format.B5G5R5A1_UNorm: targetGuid = PixelFormat.Format16bppBGR555; break;
+                case Format.B5G6R5_UNorm: targetGuid = PixelFormat.Format16bppBGR565; break;
 
-                case DXGI.Format.R32_Float:
-                case DXGI.Format.R16_Float:
-                case DXGI.Format.R16_UNorm:
-                case DXGI.Format.R8_UNorm:
-                case DXGI.Format.A8_UNorm:
-                    targetGuid = WIC.PixelFormat.Format8bppGray;
+                case Format.R32_Float:
+                case Format.R16_Float:
+                case Format.R16_UNorm:
+                case Format.R8_UNorm:
+                case Format.A8_UNorm:
+                    targetGuid = PixelFormat.Format8bppGray;
                     break;
 
                 default:
-                    targetGuid = WIC.PixelFormat.Format24bppBGR;
+                    targetGuid = PixelFormat.Format24bppBGR;
                     break;
             }
 
@@ -315,11 +315,11 @@ namespace MarukoLib.DirectX
             var db = context.MapSubresource(staging, 0, MapMode.Read, MapFlags.None, out _);
 
             if (pfGuid != targetGuid) {
-                var formatConverter = new WIC.FormatConverter(Direct2D.ImageFactory);
+                var formatConverter = new FormatConverter(Direct2D.ImageFactory);
                 if (formatConverter.CanConvert(pfGuid, targetGuid)) {
-                    var src = new WIC.Bitmap(Direct2D.ImageFactory, desc.Width, desc.Height, pfGuid,
+                    var src = new Bitmap(Direct2D.ImageFactory, desc.Width, desc.Height, pfGuid,
                         new DataRectangle(db.DataPointer, db.RowPitch));
-                    formatConverter.Initialize(src, targetGuid, WIC.BitmapDitherType.None, null, 0, WIC.BitmapPaletteType.Custom);
+                    formatConverter.Initialize(src, targetGuid, BitmapDitherType.None, null, 0, BitmapPaletteType.Custom);
                     frameEncode.WriteSource(formatConverter, new Rectangle(0, 0, desc.Width, desc.Height));
                 }
             } else {
@@ -356,43 +356,43 @@ namespace MarukoLib.DirectX
             Guid targetGuid;
 
             switch (desc.Format) {
-                case DXGI.Format.R32G32B32A32_Float: pfGuid = WIC.PixelFormat.Format128bppRGBAFloat; break;
-                case DXGI.Format.R16G16B16A16_Float: pfGuid = WIC.PixelFormat.Format64bppRGBAHalf; break;
-                case DXGI.Format.R16G16B16A16_UNorm: pfGuid = WIC.PixelFormat.Format64bppRGBA; break;
-                case DXGI.Format.R10G10B10_Xr_Bias_A2_UNorm: pfGuid = WIC.PixelFormat.Format32bppRGBA1010102XR; break; // DXGI 1.1
-                case DXGI.Format.R10G10B10A2_UNorm: pfGuid = WIC.PixelFormat.Format32bppRGBA1010102; break;
-                case DXGI.Format.B5G5R5A1_UNorm: pfGuid = WIC.PixelFormat.Format16bppBGRA5551; break;
-                case DXGI.Format.B5G6R5_UNorm: pfGuid = WIC.PixelFormat.Format16bppBGR565; break;
-                case DXGI.Format.R32_Float: pfGuid = WIC.PixelFormat.Format32bppGrayFloat; break;
-                case DXGI.Format.R16_Float: pfGuid = WIC.PixelFormat.Format16bppGrayHalf; break;
-                case DXGI.Format.R16_UNorm: pfGuid = WIC.PixelFormat.Format16bppGray; break;
-                case DXGI.Format.R8_UNorm: pfGuid = WIC.PixelFormat.Format8bppGray; break;
-                case DXGI.Format.A8_UNorm: pfGuid = WIC.PixelFormat.Format8bppAlpha; break;
+                case Format.R32G32B32A32_Float: pfGuid = PixelFormat.Format128bppRGBAFloat; break;
+                case Format.R16G16B16A16_Float: pfGuid = PixelFormat.Format64bppRGBAHalf; break;
+                case Format.R16G16B16A16_UNorm: pfGuid = PixelFormat.Format64bppRGBA; break;
+                case Format.R10G10B10_Xr_Bias_A2_UNorm: pfGuid = PixelFormat.Format32bppRGBA1010102XR; break; // DXGI 1.1
+                case Format.R10G10B10A2_UNorm: pfGuid = PixelFormat.Format32bppRGBA1010102; break;
+                case Format.B5G5R5A1_UNorm: pfGuid = PixelFormat.Format16bppBGRA5551; break;
+                case Format.B5G6R5_UNorm: pfGuid = PixelFormat.Format16bppBGR565; break;
+                case Format.R32_Float: pfGuid = PixelFormat.Format32bppGrayFloat; break;
+                case Format.R16_Float: pfGuid = PixelFormat.Format16bppGrayHalf; break;
+                case Format.R16_UNorm: pfGuid = PixelFormat.Format16bppGray; break;
+                case Format.R8_UNorm: pfGuid = PixelFormat.Format8bppGray; break;
+                case Format.A8_UNorm: pfGuid = PixelFormat.Format8bppAlpha; break;
 
-                case DXGI.Format.R8G8B8A8_UNorm:
-                    pfGuid = WIC.PixelFormat.Format32bppRGBA;
+                case Format.R8G8B8A8_UNorm:
+                    pfGuid = PixelFormat.Format32bppRGBA;
                     break;
 
-                case DXGI.Format.R8G8B8A8_UNorm_SRgb:
-                    pfGuid = WIC.PixelFormat.Format32bppRGBA;
+                case Format.R8G8B8A8_UNorm_SRgb:
+                    pfGuid = PixelFormat.Format32bppRGBA;
                     //sRGB = true;
                     break;
 
-                case DXGI.Format.B8G8R8A8_UNorm: // DXGI 1.1
-                    pfGuid = WIC.PixelFormat.Format32bppBGRA;
+                case Format.B8G8R8A8_UNorm: // DXGI 1.1
+                    pfGuid = PixelFormat.Format32bppBGRA;
                     break;
 
-                case DXGI.Format.B8G8R8A8_UNorm_SRgb: // DXGI 1.1
-                    pfGuid = WIC.PixelFormat.Format32bppBGRA;
+                case Format.B8G8R8A8_UNorm_SRgb: // DXGI 1.1
+                    pfGuid = PixelFormat.Format32bppBGRA;
                     //sRGB = true;
                     break;
 
-                case DXGI.Format.B8G8R8X8_UNorm: // DXGI 1.1
-                    pfGuid = WIC.PixelFormat.Format32bppBGR;
+                case Format.B8G8R8X8_UNorm: // DXGI 1.1
+                    pfGuid = PixelFormat.Format32bppBGR;
                     break;
 
-                case DXGI.Format.B8G8R8X8_UNorm_SRgb: // DXGI 1.1
-                    pfGuid = WIC.PixelFormat.Format32bppBGR;
+                case Format.B8G8R8X8_UNorm_SRgb: // DXGI 1.1
+                    pfGuid = PixelFormat.Format32bppBGR;
                     //sRGB = true;
                     break;
 
@@ -402,35 +402,35 @@ namespace MarukoLib.DirectX
 
             // Create file
             var fs = new FileStream(fileName, FileMode.Create);
-            var encoder = new WIC.BitmapEncoder(Direct2D.ImageFactory, guidContainerFormat);
+            var encoder = new BitmapEncoder(Direct2D.ImageFactory, guidContainerFormat);
             encoder.Initialize(fs);
 
 
-            var frameEncode = new WIC.BitmapFrameEncode(encoder);
+            var frameEncode = new BitmapFrameEncode(encoder);
             frameEncode.Initialize();
             frameEncode.SetSize(desc.Width, desc.Height);
             frameEncode.SetResolution(72.0, 72.0);
 
 
             switch (desc.Format) {
-                case DXGI.Format.R32G32B32A32_Float:
-                case DXGI.Format.R16G16B16A16_Float:
-                    targetGuid = WIC.PixelFormat.Format24bppBGR;
+                case Format.R32G32B32A32_Float:
+                case Format.R16G16B16A16_Float:
+                    targetGuid = PixelFormat.Format24bppBGR;
                     break;
-                case DXGI.Format.R16G16B16A16_UNorm: targetGuid = WIC.PixelFormat.Format48bppBGR; break;
-                case DXGI.Format.B5G5R5A1_UNorm: targetGuid = WIC.PixelFormat.Format16bppBGR555; break;
-                case DXGI.Format.B5G6R5_UNorm: targetGuid = WIC.PixelFormat.Format16bppBGR565; break;
+                case Format.R16G16B16A16_UNorm: targetGuid = PixelFormat.Format48bppBGR; break;
+                case Format.B5G5R5A1_UNorm: targetGuid = PixelFormat.Format16bppBGR555; break;
+                case Format.B5G6R5_UNorm: targetGuid = PixelFormat.Format16bppBGR565; break;
 
-                case DXGI.Format.R32_Float:
-                case DXGI.Format.R16_Float:
-                case DXGI.Format.R16_UNorm:
-                case DXGI.Format.R8_UNorm:
-                case DXGI.Format.A8_UNorm:
-                    targetGuid = WIC.PixelFormat.Format8bppGray;
+                case Format.R32_Float:
+                case Format.R16_Float:
+                case Format.R16_UNorm:
+                case Format.R8_UNorm:
+                case Format.A8_UNorm:
+                    targetGuid = PixelFormat.Format8bppGray;
                     break;
 
                 default:
-                    targetGuid = WIC.PixelFormat.Format24bppBGR;
+                    targetGuid = PixelFormat.Format24bppBGR;
                     break;
             }
 
@@ -441,12 +441,12 @@ namespace MarukoLib.DirectX
             var db = context.MapSubresource(staging, 0, MapMode.Read, MapFlags.None, out _);
 
             if (pfGuid != targetGuid) {
-                var formatConverter = new WIC.FormatConverter(Direct2D.ImageFactory);
+                var formatConverter = new FormatConverter(Direct2D.ImageFactory);
 
                 if (formatConverter.CanConvert(pfGuid, targetGuid)) {
-                    var src = new WIC.Bitmap(Direct2D.ImageFactory, desc.Width, desc.Height, pfGuid,
+                    var src = new Bitmap(Direct2D.ImageFactory, desc.Width, desc.Height, pfGuid,
                         new DataRectangle(db.DataPointer, db.RowPitch));
-                    formatConverter.Initialize(src, targetGuid, WIC.BitmapDitherType.None, null, 0, WIC.BitmapPaletteType.Custom);
+                    formatConverter.Initialize(src, targetGuid, BitmapDitherType.None, null, 0, BitmapPaletteType.Custom);
                     frameEncode.WriteSource(formatConverter, new Rectangle(0, 0, desc.Width, desc.Height));
                 }
 
@@ -602,27 +602,27 @@ namespace MarukoLib.DirectX
         }
 
 
-        private DXGI.Format EnsureNotTypeless(DXGI.Format format) {
+        private Format EnsureNotTypeless(Format format) {
             switch (format) {
-                case DXGI.Format.R32G32B32A32_Typeless: return DXGI.Format.R32G32B32A32_Float;
-                case DXGI.Format.R32G32B32_Typeless: return DXGI.Format.R32G32B32_Float;
-                case DXGI.Format.R16G16B16A16_Typeless: return DXGI.Format.R16G16B16A16_UNorm;
-                case DXGI.Format.R32G32_Typeless: return DXGI.Format.R32G32_Float;
-                case DXGI.Format.R10G10B10A2_Typeless: return DXGI.Format.R10G10B10A2_UNorm;
-                case DXGI.Format.R8G8B8A8_Typeless: return DXGI.Format.R8G8B8A8_UNorm;
-                case DXGI.Format.R16G16_Typeless: return DXGI.Format.R16G16_UNorm;
-                case DXGI.Format.R32_Typeless: return DXGI.Format.R32_Float;
-                case DXGI.Format.R8G8_Typeless: return DXGI.Format.R8G8_UNorm;
-                case DXGI.Format.R16_Typeless: return DXGI.Format.R16_UNorm;
-                case DXGI.Format.R8_Typeless: return DXGI.Format.R8_UNorm;
-                case DXGI.Format.BC1_Typeless: return DXGI.Format.BC1_UNorm;
-                case DXGI.Format.BC2_Typeless: return DXGI.Format.BC2_UNorm;
-                case DXGI.Format.BC3_Typeless: return DXGI.Format.BC3_UNorm;
-                case DXGI.Format.BC4_Typeless: return DXGI.Format.BC4_UNorm;
-                case DXGI.Format.BC5_Typeless: return DXGI.Format.BC5_UNorm;
-                case DXGI.Format.B8G8R8A8_Typeless: return DXGI.Format.B8G8R8A8_UNorm;
-                case DXGI.Format.B8G8R8X8_Typeless: return DXGI.Format.B8G8R8X8_UNorm;
-                case DXGI.Format.BC7_Typeless: return DXGI.Format.BC7_UNorm;
+                case Format.R32G32B32A32_Typeless: return Format.R32G32B32A32_Float;
+                case Format.R32G32B32_Typeless: return Format.R32G32B32_Float;
+                case Format.R16G16B16A16_Typeless: return Format.R16G16B16A16_UNorm;
+                case Format.R32G32_Typeless: return Format.R32G32_Float;
+                case Format.R10G10B10A2_Typeless: return Format.R10G10B10A2_UNorm;
+                case Format.R8G8B8A8_Typeless: return Format.R8G8B8A8_UNorm;
+                case Format.R16G16_Typeless: return Format.R16G16_UNorm;
+                case Format.R32_Typeless: return Format.R32_Float;
+                case Format.R8G8_Typeless: return Format.R8G8_UNorm;
+                case Format.R16_Typeless: return Format.R16_UNorm;
+                case Format.R8_Typeless: return Format.R8_UNorm;
+                case Format.BC1_Typeless: return Format.BC1_UNorm;
+                case Format.BC2_Typeless: return Format.BC2_UNorm;
+                case Format.BC3_Typeless: return Format.BC3_UNorm;
+                case Format.BC4_Typeless: return Format.BC4_UNorm;
+                case Format.BC5_Typeless: return Format.BC5_UNorm;
+                case Format.B8G8R8A8_Typeless: return Format.B8G8R8A8_UNorm;
+                case Format.B8G8R8X8_Typeless: return Format.B8G8R8X8_UNorm;
+                case Format.BC7_Typeless: return Format.BC7_UNorm;
                 default: return format;
             }
         }

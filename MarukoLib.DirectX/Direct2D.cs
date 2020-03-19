@@ -1,8 +1,9 @@
 ﻿using System;
+using SharpDX;
+using SharpDX.DXGI;
+using SharpDX.WIC;
 using D2D = SharpDX.Direct2D1;
-using WIC = SharpDX.WIC;
 using DWrite = SharpDX.DirectWrite;
-using Utilities = SharpDX.Utilities;
 
 namespace MarukoLib.DirectX
 {
@@ -18,9 +19,9 @@ namespace MarukoLib.DirectX
             get => _d2dFactory;
         }
 
-        private static WIC.ImagingFactory _imageFactory;
+        private static ImagingFactory _imageFactory;
 
-        public static WIC.ImagingFactory ImageFactory => _imageFactory;
+        public static ImagingFactory ImageFactory => _imageFactory;
 
         private static DWrite.Factory _writeFactory;
 
@@ -29,7 +30,7 @@ namespace MarukoLib.DirectX
         public static void CreateIndependentResource()
         {
             Factory2D = new D2D.Factory();
-            _imageFactory = new WIC.ImagingFactory();
+            _imageFactory = new ImagingFactory();
             _writeFactory = new DWrite.Factory();
         }
 
@@ -42,7 +43,7 @@ namespace MarukoLib.DirectX
 
         public static void EnumAdapter()
         {
-            foreach (var a in new SharpDX.DXGI.Factory4().Adapters)
+            foreach (var a in new Factory4().Adapters)
                 Console.WriteLine($"{a.Description.Description}");
         }
 

@@ -12,7 +12,7 @@ namespace MarukoLib.Lang
         Minute = TimeSpan.TicksPerMinute,
         Second = TimeSpan.TicksPerSecond,
         Millisecond = TimeSpan.TicksPerMillisecond,
-        Tick = 1,
+        Tick = 1
     }
 
     public static class TimeUnitExt

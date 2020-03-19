@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 
 namespace MarukoLib.Lang
 {
@@ -42,11 +43,11 @@ namespace MarukoLib.Lang
         public static TSubclass CastOrConvertToSubType<TFrom, TSubclass>(this TFrom input, Func<TFrom, TSubclass> convertFunc) 
             where TSubclass : TFrom => input is TSubclass tout ? tout : convertFunc(input);
 
-        public static bool IsNullableType(this Type type) => Nullable.GetUnderlyingType(type) != null;
+        public static bool IsNullableType([NotNull] this Type type) => Nullable.GetUnderlyingType(type) != null;
 
-        public static bool IsNullableType(this Type type, out Type underlyingType) => (underlyingType = Nullable.GetUnderlyingType(type)) != null;
+        public static bool IsNullableType([NotNull] this Type type, out Type underlyingType) => (underlyingType = Nullable.GetUnderlyingType(type)) != null;
 
-        public static IEnumerable<Type> GetGenericTypes(this Type type, Type genericType, string genericArgumentName)
+        public static IEnumerable<Type> GetGenericTypes([NotNull] this Type type, [NotNull] Type genericType, [NotNull] string genericArgumentName)
         {
             if (!genericType.IsGenericTypeDefinition) throw new ArgumentException("'genericType' is not a generic type definition");
             var genericArguments = genericType.GetGenericArguments();
@@ -56,14 +57,14 @@ namespace MarukoLib.Lang
             throw new ArgumentException($"generic argument not found, by name: '{genericArgumentName}'");
         }
 
-        public static Type GetGenericType(this Type type, Type genericType, int genericArgumentIndex = 0)
+        public static Type GetGenericType([NotNull] this Type type, [NotNull] Type genericType, int genericArgumentIndex = 0)
         {
             var types = GetGenericTypes(type, genericType, genericArgumentIndex).ToArray();
             if (types.Length != 1) throw new ArgumentException("multiple definitions");
             return types[0];
         }
 
-        public static IEnumerable<Type> GetGenericTypes(this Type type, Type genericType, int genericArgumentIndex = 0)
+        public static IEnumerable<Type> GetGenericTypes([NotNull] this Type type, [NotNull] Type genericType, int genericArgumentIndex = 0)
         {
             if (!genericType.IsGenericTypeDefinition) throw new ArgumentException("'genericType' is not a generic type definition");
             if (type == genericType)

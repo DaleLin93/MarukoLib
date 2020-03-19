@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Runtime.InteropServices;
+using MarukoLib.Interop.Properties;
 
 namespace MarukoLib.Interop
 {
@@ -9,7 +10,7 @@ namespace MarukoLib.Interop
 
         public const string DllName = "inpoutx64.dll";
 
-        private static byte[] DllBinary => Properties.Resources.inpoutx64;
+        private static byte[] DllBinary => Resources.inpoutx64;
 
         [DllImport(DllName)]
         public static extern void Out32(short portAddress, short value);

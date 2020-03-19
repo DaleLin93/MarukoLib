@@ -144,7 +144,9 @@ namespace MarukoLib.Lang
     public static class Disposables
     {
 
-        public static IDisposable For(Action action) => action == null ? (IDisposable) NoOpDisposable.Instance : new DelegatedDisposable(action, true);
+        public static IDisposable For(Action action) => action == null ? (IDisposable)NoOpDisposable.Instance : new DelegatedDisposable(action, true);
+
+        public static Disposable<T> For<T>(T target, Action<T> action) => Disposable<T>.Of(target, action);
 
     }
 

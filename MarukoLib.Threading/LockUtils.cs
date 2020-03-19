@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using MarukoLib.Lang;
 
@@ -7,6 +8,12 @@ namespace MarukoLib.Threading
 
     public static class LockUtils
     {
+
+        [SuppressMessage("ReSharper", "InconsistentNaming")]
+        public static ReaderWriterLockSlim RWLock() => new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
+
+        [SuppressMessage("ReSharper", "InconsistentNaming")]
+        public static ReaderWriterLockSlim RecursiveRWLock() => new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 
         public static IDisposable AcquireReadLock(this ReaderWriterLockSlim @lock)
         {

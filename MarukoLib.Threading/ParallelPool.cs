@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using MarukoLib.Lang;
 using MarukoLib.Logging;
 
@@ -15,8 +16,6 @@ namespace MarukoLib.Threading
     {
 
         private static readonly Logger Logger = Logger.GetLogger(typeof(ParallelPool));
-
-        public delegate void TaskExecFunc<in T>(T input);
 
         public sealed class TaskDescriptor
         {
@@ -50,13 +49,16 @@ namespace MarukoLib.Threading
             ParallelLevel = parallelLevel;
         }
 
-        public void Batch<T>(TaskExecFunc<T> taskExecFunc, params T[] @params) => Batch(@params.ToList(), taskExecFunc);
+        public void Batch<T>(Action<T> taskExecFunc, params T[] @params) 
+            => Batch(@params.ToList(), taskExecFunc);
 
-        public void Batch<T>(IList<T> @params, TaskExecFunc<T> taskExecFunc) => Batch((uint)@params.Count, task => taskExecFunc(@params[(int)task.TaskIndex]));
+        public void Batch<T>(IList<T> @params, Action<T> taskExecFunc) 
+            => Batch((uint)@params.Count, task => taskExecFunc(@params[(int)task.TaskIndex]));
 
-        public void Batch(TaskExecFunc<TaskDescriptor> taskExecFunc) => Batch(ParallelLevel, taskExecFunc);
+        public void Batch(Action<TaskDescriptor> taskExecFunc)
+            => Batch(ParallelLevel, taskExecFunc);
 
-        public void Batch(uint taskNum, TaskExecFunc<TaskDescriptor> taskExecFunc)
+        public void Batch(uint taskNum, Action<TaskDescriptor> taskExecFunc)
         {
             var guid = Guid.NewGuid();
 
@@ -67,12 +69,12 @@ namespace MarukoLib.Threading
             var exceptions = new LinkedList<Exception>();
             lock (_lock)
             {
-                var runningTasks = new System.Threading.Tasks.Task[ParallelLevel];
+                var runningTasks = new Task[ParallelLevel];
                 var cancellationTokenSource = new CancellationTokenSource();
                 var cancellationToken = cancellationTokenSource.Token;
 
                 for (var i = 0; i < runningTasks.Length; i++)
-                    runningTasks[i] = System.Threading.Tasks.Task.Factory.StartNew(() =>
+                    runningTasks[i] = Task.Factory.StartNew(() =>
                     {
                         for (;;)
                         {
@@ -98,7 +100,7 @@ namespace MarukoLib.Threading
 
                 try
                 {
-                    System.Threading.Tasks.Task.WaitAll(runningTasks);
+                    Task.WaitAll(runningTasks);
                 }
                 catch (Exception e)
                 {

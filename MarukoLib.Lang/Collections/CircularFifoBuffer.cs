@@ -1,50 +1,49 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MarukoLib.Lang.Collections
 {
 
-    internal class Enumerator<T> : IEnumerator<T>
+    public class CircularFifoBuffer<T> : ICollection<T>, IReadOnlyList<T>
     {
 
-        private readonly CircularFifoBuffer<T> _buffer;
-
-        private int _nextIndex;
-
-        public Enumerator(CircularFifoBuffer<T> buffer)
+        private class Enumerator : IEnumerator<T>
         {
-            _buffer = buffer;
-            Reset();
+
+            private readonly CircularFifoBuffer<T> _buffer;
+
+            private int _nextIndex;
+
+            public Enumerator(CircularFifoBuffer<T> buffer)
+            {
+                _buffer = buffer;
+                Reset();
+            }
+
+            public T Current { get; private set; }
+
+            public bool MoveNext()
+            {
+                if (_nextIndex >= _buffer.Count) return false;
+                Current = _buffer[_nextIndex++];
+                return true;
+            }
+
+            public void Reset() => _nextIndex = 0;
+
+            public void Dispose() { }
+
+            object IEnumerator.Current => Current;
+
         }
 
-        public T Current { get; private set; }
-
-        public bool MoveNext()
-        {
-            if (_nextIndex >= _buffer.Count)
-                return false;
-            Current = _buffer[_nextIndex++];
-            return true;
-        }
-
-        public void Reset() => _nextIndex = 0;
-
-        public void Dispose() { }
-
-        object IEnumerator.Current => Current;
-
-    }
-
-    public class CircularFifoBuffer<T> : ICollection<T>
-    {
         private readonly T[] _array;
 
-        private int _tail;
+        private long _tail, _head;
 
-        private int _head;
-
-        public CircularFifoBuffer(int capacity)
+        public CircularFifoBuffer(long capacity)
         {
             Capacity = capacity;
             _array = new T[capacity];
@@ -55,26 +54,43 @@ namespace MarukoLib.Lang.Collections
         {
             get
             {
-                if (index < 0 || index >= Count)
-                    throw new IndexOutOfRangeException();
+                if (index < 0 || index >= Count) throw new IndexOutOfRangeException($"count: {Count}, index: {index}");
                 return _array[(_tail + index) % Capacity];
             }
             set
             {
-                if (index < 0 || index >= Count)
-                    throw new IndexOutOfRangeException();
+                if (index < 0 || index >= Count) throw new IndexOutOfRangeException($"count: {Count}, index: {index}");
                 _array[(_tail + index) % Capacity] = value;
             }
         }
 
-        public int Capacity { get; }
+        public T First
+        {
+            get
+            {
+                if (Count <= 0) throw new InvalidOperationException("the collection is empty");
+                return this[0];
+            }
+        }
+
+        public T Last
+        {
+            get
+            {
+                var count = Count;
+                if (count <= 0) throw new InvalidOperationException("the collection is empty");
+                return this[count - 1];
+            }
+        }
+
+        public long Capacity { get; }
 
         public int Count
         {
             get
             {
                 var count = _head - _tail;
-                return count < 0 ? count + Capacity : count;
+                return (int) (count < 0 ? count + Capacity : count);
             }
         }
 
@@ -93,8 +109,8 @@ namespace MarukoLib.Lang.Collections
             var t = default(T);
             var adjTail = _tail > _head ? _tail - Capacity : _tail;
             if (adjTail >= _head) return t;
-            t = (T)_array[_tail++];
-            _tail = _tail % Capacity;
+            t = _array[_tail++];
+            _tail %= Capacity;
             return t;
         }
 
@@ -104,13 +120,7 @@ namespace MarukoLib.Lang.Collections
             _head = 0;
         }
 
-        public bool Contains(T item)
-        {
-            foreach (var v in this)
-                if (Equals(v, item))
-                    return true;
-            return false;
-        }
+        public bool Contains(T item) => Enumerable.Contains(this, item);
 
         public void CopyTo(T[] array, int arrayIndex)
         {
@@ -120,7 +130,7 @@ namespace MarukoLib.Lang.Collections
 
         public bool Remove(T item) => throw new NotSupportedException();
 
-        public IEnumerator<T> GetEnumerator() => new Enumerator<T>(this);
+        public IEnumerator<T> GetEnumerator() => new Enumerator(this);
 
         public override string ToString() => $"CircularFifoBuffer(capacity={Capacity}, head={_head}, tail={_tail})";
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using MarukoLib.LabStreamingLayer.Properties;
 
 namespace MarukoLib.LabStreamingLayer
@@ -90,7 +91,7 @@ namespace MarukoLib.LabStreamingLayer
             cf_int64 = 7,       // For now only for future compatibility. Support for this type is not yet exposed in all languages. 
                                 // Also, some builds of liblsl will not be able to send or receive data of this type.
             cf_undefined = 0    // Can not be transmitted.
-        };
+        }
 
         /**
         * Protocol version.
@@ -902,8 +903,8 @@ namespace MarukoLib.LabStreamingLayer
             public LostException() { }
             public LostException(string message) { }
             public LostException(string message, Exception inner) { }
-            protected LostException(System.Runtime.Serialization.SerializationInfo info,
-                System.Runtime.Serialization.StreamingContext context)
+            protected LostException(SerializationInfo info,
+                StreamingContext context)
             { }
         }
 
@@ -919,8 +920,8 @@ namespace MarukoLib.LabStreamingLayer
 
             public InternalException(string message, Exception inner) { }
 
-            protected InternalException(System.Runtime.Serialization.SerializationInfo info,
-                System.Runtime.Serialization.StreamingContext context)
+            protected InternalException(SerializationInfo info,
+                StreamingContext context)
             { }
 
         }

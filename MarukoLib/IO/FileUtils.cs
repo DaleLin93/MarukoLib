@@ -1,10 +1,10 @@
-﻿using JetBrains.Annotations;
-using MarukoLib.Lang;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
+using MarukoLib.Lang;
 
 namespace MarukoLib.IO
 {
@@ -146,12 +146,18 @@ namespace MarukoLib.IO
 
         public static string NormalizePath(string path) => Path.GetFullPath(path);
 
-        public static string GetFileFilterPattern([CanBeNull] string desc, [CanBeNull] string ext)
+        public static string NormalizeSuffix(string suffix) => suffix == null ? null : suffix.Length > 0 && suffix[0] != '.' ? $".{suffix}" : suffix;
+
+        public static string MergeFilterPatterns([CanBeNull, ItemCanBeNull] params string[] patterns) 
+            => patterns?.Select(StringUtils.Trim2Null).Where(Predicates.NotNull).Distinct()
+                .Aggregate<string, string>(null, (a, b) => a == null ? b : $"{a}|{b}");
+
+        public static string GetFileFilterPattern([CanBeNull] string desc, [CanBeNull, ItemCanBeNull] params string[] extensions)
         {
-            ext = ext?.Trim();
-            if (string.IsNullOrEmpty(ext)) ext = ".*";
-            else if (!ext.StartsWith(".", StringComparison.Ordinal)) ext = $".{ext}"; 
-            return string.IsNullOrWhiteSpace(desc) ? $"*{ext}|*{ext}" : $"{desc} (*{ext})|*{ext}";
+            var extFilter = extensions?.Select(StringUtils.Trim2Null).Where(Predicates.NotNull)
+                .Select(ext => $"*.{NormalizeSuffix(ext)}").Distinct().Aggregate<string, string>(null, (a, b) => a == null ? b : $"{a},{b}");
+            if (string.IsNullOrEmpty(extFilter)) extFilter = "*.*";
+            return string.IsNullOrWhiteSpace(desc) ? $"{extFilter}|{extFilter}" : $"{desc} ({extFilter})|*{extFilter}";
         }
 
         public static bool IsValidFileName([CanBeNull] string fileName) 

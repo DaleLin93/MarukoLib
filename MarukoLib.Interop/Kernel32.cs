@@ -39,7 +39,7 @@ namespace MarukoLib.Interop
             public uint dbcn_reserved;
             public uint dbcn_resource;
             public uint dbcn_flags;
-        };
+        }
 
         public struct DEV_BROADCAST_VOLUME
         {
@@ -48,7 +48,7 @@ namespace MarukoLib.Interop
             public uint dbcv_reserved;
             public uint dbcv_unitmask;
             public ushort dbcv_flags;
-        };
+        }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
         public class DEV_BROADCAST_DEVICEINTERFACE
@@ -91,7 +91,7 @@ namespace MarukoLib.Interop
             QueryRemoveFailed = 0x8002, // removal aborted
             RemovePending = 0x8003, // about to remove, still avail.
             RemoveComplete = 0x8004, // device is gone
-            TypeSpecific = 0x8005, // type specific event
+            TypeSpecific = 0x8005 // type specific event
         }
 
         [Flags]
@@ -101,7 +101,7 @@ namespace MarukoLib.Interop
             Volume = 0x00000002, //Logical volume
             Port = 0x00000003, //Port device (serial or parallel)
             DeviceInterface = 0x00000005, //Class of devices
-            Handle = 0x00000006, //File system handle
+            Handle = 0x00000006 //File system handle
         }
 
         [Flags]

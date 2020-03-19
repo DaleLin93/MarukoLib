@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Windows.Forms;
+using MarukoLib.Logging;
 using SharpDX;
+using SharpDX.DXGI;
 using SharpDX.Windows;
 using DW = SharpDX.DirectWrite;
-using DXGI = SharpDX.DXGI;
 using D2D1 = SharpDX.Direct2D1;
 using D3D = SharpDX.Direct3D;
 using D3D11 = SharpDX.Direct3D11;
-using MarukoLib.Logging;
 
 namespace MarukoLib.DirectX
 {
@@ -74,12 +74,12 @@ namespace MarukoLib.DirectX
             D2DFactory = new D2D1.Factory();
 
             RenderTarget = new D2D1.WindowRenderTarget(D2DFactory,
-                new D2D1.RenderTargetProperties(new D2D1.PixelFormat(DXGI.Format.Unknown, D2D1.AlphaMode.Ignore)),
+                new D2D1.RenderTargetProperties(new D2D1.PixelFormat(Format.Unknown, D2D1.AlphaMode.Ignore)),
                 new D2D1.HwndRenderTargetProperties
                 {
                     Hwnd = Handle,
                     PixelSize = new Size2(clientSize.Width, clientSize.Height),
-                    PresentOptions = D2D1.PresentOptions.Immediately,
+                    PresentOptions = D2D1.PresentOptions.Immediately
                 });
 
             SolidColorBrush = new D2D1.SolidColorBrush(RenderTarget, Color.White);

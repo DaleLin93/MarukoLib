@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Windows.Forms;
 using SharpDX;
+using SharpDX.DXGI;
 using SharpDX.Windows;
 using DW = SharpDX.DirectWrite;
-using DXGI = SharpDX.DXGI;
 using D2D1 = SharpDX.Direct2D1;
 using D3D = SharpDX.Direct3D;
 using D3D11 = SharpDX.Direct3D11;
@@ -24,13 +24,13 @@ namespace MarukoLib.DirectX
 
         #region DX Properties
 
-        protected DXGI.PresentParameters PresentParameters { get; } = new DXGI.PresentParameters();
+        protected PresentParameters PresentParameters { get; } = new PresentParameters();
 
         protected D3D11.Device D3DDevice { get; private set; }
 
         protected D3D11.DeviceContext D3DDeviceContext { get; private set; }
 
-        protected DXGI.SwapChain1 SwapChain { get; private set; }
+        protected SwapChain1 SwapChain { get; private set; }
 
         protected D3D11.RenderTargetView RenderTargetView { get; private set; }
 
@@ -62,17 +62,17 @@ namespace MarukoLib.DirectX
         protected virtual void InitializeDirectXResources()
         {
             var clientSize = ClientSize;
-            var backBufferDesc = new DXGI.ModeDescription(clientSize.Width, clientSize.Height,
-                new DXGI.Rational(60, 1), DXGI.Format.R8G8B8A8_UNorm);
+            var backBufferDesc = new ModeDescription(clientSize.Width, clientSize.Height,
+                new Rational(60, 1), Format.R8G8B8A8_UNorm);
 
-            var swapChainDesc = new DXGI.SwapChainDescription()
+            var swapChainDesc = new SwapChainDescription
             {
                 ModeDescription = backBufferDesc,
-                SampleDescription = new DXGI.SampleDescription(1, 0),
-                Usage = DXGI.Usage.RenderTargetOutput,
+                SampleDescription = new SampleDescription(1, 0),
+                Usage = Usage.RenderTargetOutput,
                 BufferCount = 1,
                 OutputHandle = Handle,
-                SwapEffect = DXGI.SwapEffect.Discard,
+                SwapEffect = SwapEffect.Discard,
                 IsWindowed = !IsFullscreen
             };
 
@@ -82,14 +82,14 @@ namespace MarukoLib.DirectX
             D3DDevice = device;
             D3DDeviceContext = D3DDevice.ImmediateContext;
 
-            SwapChain = new DXGI.SwapChain1(swapChain.NativePointer);
+            SwapChain = new SwapChain1(swapChain.NativePointer);
 
             D2DFactory = new D2D1.Factory();
             using (var backBuffer = SwapChain.GetBackBuffer<D3D11.Texture2D>(0))
             {
                 RenderTargetView = new D3D11.RenderTargetView(D3DDevice, backBuffer);
-                RenderTarget = new D2D1.RenderTarget(D2DFactory, backBuffer.QueryInterface<DXGI.Surface>(),
-                        new D2D1.RenderTargetProperties(new D2D1.PixelFormat(DXGI.Format.Unknown, D2D1.AlphaMode.Premultiplied)))
+                RenderTarget = new D2D1.RenderTarget(D2DFactory, backBuffer.QueryInterface<Surface>(),
+                        new D2D1.RenderTargetProperties(new D2D1.PixelFormat(Format.Unknown, D2D1.AlphaMode.Premultiplied)))
                     {TextAntialiasMode = D2D1.TextAntialiasMode.Cleartype};
             }
             DwFactory = new DW.Factory(DW.FactoryType.Shared);
@@ -116,7 +116,7 @@ namespace MarukoLib.DirectX
                 RenderTarget.BeginDraw();
                 Draw(RenderTarget);
                 RenderTarget.EndDraw();
-                SwapChain.Present(1, DXGI.PresentFlags.None, PresentParameters);
+                SwapChain.Present(1, PresentFlags.None, PresentParameters);
             }
         }
 

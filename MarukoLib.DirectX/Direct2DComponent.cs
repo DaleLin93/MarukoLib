@@ -1,6 +1,7 @@
-﻿using SharpDX;
+﻿using System.Windows;
+using SharpDX;
+using SharpDX.DXGI;
 using D2D = SharpDX.Direct2D1;
-using DXGI = SharpDX.DXGI;
 
 namespace MarukoLib.DirectX
 {
@@ -37,11 +38,11 @@ namespace MarukoLib.DirectX
         protected virtual void CreateResource()
         {
             //***
-            using (var surface = BackBuffer.QueryInterface<DXGI.Surface>())
+            using (var surface = BackBuffer.QueryInterface<Surface>())
             {
-                _renderTarget = new D2D.RenderTarget(Direct2D.Factory2D, surface, new D2D.RenderTargetProperties()
+                _renderTarget = new D2D.RenderTarget(Direct2D.Factory2D, surface, new D2D.RenderTargetProperties
                 {
-                    PixelFormat = new D2D.PixelFormat(DXGI.Format.Unknown, D2D.AlphaMode.Premultiplied),
+                    PixelFormat = new D2D.PixelFormat(Format.Unknown, D2D.AlphaMode.Premultiplied)
                 });
             }
             _renderTarget.AntialiasMode = D2D.AntialiasMode.PerPrimitive;
@@ -112,7 +113,7 @@ namespace MarukoLib.DirectX
                     }
                     catch (SharpDXException e)
                     {
-                        System.Windows.MessageBox.Show(e.ToString());
+                        MessageBox.Show(e.ToString());
                     }
             }
         }

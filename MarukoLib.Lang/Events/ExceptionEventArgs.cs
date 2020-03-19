@@ -1,7 +1,9 @@
-﻿namespace MarukoLib.Lang.Events
+﻿using System;
+
+namespace MarukoLib.Lang.Events
 {
 
-    public class ExceptionEventArgs : System.EventArgs
+    public class ExceptionEventArgs : EventArgs
     {
 
         public ExceptionEventArgs(object exception) => ExceptionObject = exception;

@@ -53,7 +53,7 @@ namespace MarukoLib.Threading
 
         private readonly ThreadPriority _priority;
 
-        private readonly ApartmentState? _apartmentState;
+        private readonly ApartmentState _apartmentState;
 
         private readonly StoppingAction _stoppingAction;
 
@@ -64,18 +64,18 @@ namespace MarukoLib.Threading
         private Thread _thread;
 
         public AsyncCyclicExecutor(Action task, bool stopOnUnhandledException = false, ThreadPriority priority = ThreadPriority.Normal, 
-            ApartmentState? apartmentState = null, StoppingAction stoppingAction = StoppingAction.None)
-            : this($"{nameof(AsyncCyclicExecutor)} #{InstanceId.GetAndIncrement()}", task, stopOnUnhandledException, priority, apartmentState, stoppingAction) { }
+            StoppingAction stoppingAction = StoppingAction.None, ApartmentState apartmentState = ApartmentState.Unknown)
+            : this($"{nameof(AsyncCyclicExecutor)} #{InstanceId.GetAndIncrement()}", task, stopOnUnhandledException, priority, stoppingAction, apartmentState) { }
 
         public AsyncCyclicExecutor(string name, Action task, bool stopOnUnhandledException = false, ThreadPriority priority = ThreadPriority.Normal, 
-            ApartmentState? apartmentState = null, StoppingAction stoppingAction = StoppingAction.None)
+            StoppingAction stoppingAction = StoppingAction.None, ApartmentState apartmentState = ApartmentState.Unknown)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
             _task = task ?? throw new ArgumentNullException(nameof(task));
             _stopOnUnhandledException = stopOnUnhandledException;
             _priority = priority;
-            _apartmentState = apartmentState;
             _stoppingAction = stoppingAction;
+            _apartmentState = apartmentState;
         }
 
         public string Name { get; }
@@ -88,7 +88,7 @@ namespace MarukoLib.Threading
                 return false;
             _stopped.Set(false);
             var thread = _thread = new Thread(Run) { Name = Name, IsBackground = true, Priority = _priority };
-            if (_apartmentState != null) thread.SetApartmentState(_apartmentState.Value);
+            if (_apartmentState != ApartmentState.Unknown) thread.SetApartmentState(_apartmentState);
             Starting?.Invoke(this, EventArgs.Empty);
             thread.Start();
             return true;

@@ -102,7 +102,7 @@ namespace MarukoLib.UI
             catch (Exception e)
             {
                 Logger.Error("DispatcherInvoke - error while function execution", e);
-                return default(TR);
+                return default;
             }
         }
 

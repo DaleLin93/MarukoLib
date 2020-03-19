@@ -1,13 +1,13 @@
 ﻿using System;
-using System.Windows;
-using System.Windows.Controls;
-using System.Reflection;
-using System.Windows.Input;
-using System.Windows.Interop;
-using System.Runtime.InteropServices;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using Microsoft.Win32;
 
@@ -90,28 +90,28 @@ namespace MarukoLib.Interop
                     RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left)
                     {
                         RoutedEvent = Mouse.MouseDownEvent,
-                        Source = this,
+                        Source = this
                     });
                     break;
                 case WindowMessage.LeftButtonUp:
                     RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left)
                     {
                         RoutedEvent = Mouse.MouseUpEvent,
-                        Source = this,
+                        Source = this
                     });
                     break;
                 case WindowMessage.RightButtonDown:
                     RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Right)
                     {
                         RoutedEvent = Mouse.MouseDownEvent,
-                        Source = this,
+                        Source = this
                     });
                     break;
                 case WindowMessage.RightButtonUp:
                     RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Right)
                     {
                         RoutedEvent = Mouse.MouseUpEvent,
-                        Source = this,
+                        Source = this
                     });
                     break;
                 case WindowMessage.MouseMove:
@@ -161,7 +161,7 @@ namespace MarukoLib.Interop
                     RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left)
                     {
                         RoutedEvent = Control.MouseDoubleClickEvent,
-                        Source = DoubleClickControl,
+                        Source = DoubleClickControl
                     });
 
                 }
@@ -171,14 +171,14 @@ namespace MarukoLib.Interop
                     RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Right)
                     {
                         RoutedEvent = Control.MouseDoubleClickEvent,
-                        Source = this,
+                        Source = this
                     });
                     break;
                 case WindowMessage.MiddleButtonDoubleClick:
                     RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Middle)
                     {
                         RoutedEvent = Control.MouseDoubleClickEvent,
-                        Source = this,
+                        Source = this
                     });
                     break;
                 default:
@@ -247,7 +247,7 @@ namespace MarukoLib.Interop
             var inputReportEventArgs = (InputEventArgs) targetAssembly
                 .GetType("System.Windows.Input.InputReportEventArgs")
                 .GetConstructors()[0]
-                .Invoke(new Object[] {Mouse.PrimaryDevice, mouseInputReport});
+                .Invoke(new[] {Mouse.PrimaryDevice, mouseInputReport});
 
             inputReportEventArgs.RoutedEvent = (RoutedEvent) typeof(InputManager)
                 .GetField("PreviewInputReportEvent", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
@@ -394,7 +394,7 @@ namespace MarukoLib.Interop
         XButtonDoubleClick = 0x020D,
         MouseHorizontalWheel = 0x020E,
         MouseLast = 0x020E,
-        DeviceChange = 0x0219,
+        DeviceChange = 0x0219
     }
 
     [Flags]
@@ -406,7 +406,7 @@ namespace MarukoLib.Interop
         RightButton = 0x0002,
         Shift = 0x0004,
         XButton1 = 0x0020,
-        XButton2 = 0x0040,
+        XButton2 = 0x0040
     }
 
     public enum Cursor
@@ -428,6 +428,6 @@ namespace MarukoLib.Interop
         SizeNorthwestAndSoutheast = 32642,
         SizeWestEast = 32644,
         UpArrow = 32516,
-        Wait = 32514,
+        Wait = 32514
     }
 }

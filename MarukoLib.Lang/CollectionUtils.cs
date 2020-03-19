@@ -38,6 +38,12 @@ namespace MarukoLib.Lang
 
         }
 
+        public static TR Collect<T, TR>(this ICollection<T> collection, TR value) where TR : T
+        {
+            collection.Add(value);
+            return value;
+        }
+
         public static IReadOnlyCollection<T> AsReadonly<T>(this ICollection<T> collection)
         {
             if (collection is IReadOnlyCollection<T> @readonly) return @readonly;
