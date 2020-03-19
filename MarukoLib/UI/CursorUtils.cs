@@ -35,19 +35,26 @@ namespace MarukoLib.UI
             element.LostFocus += (sender, args) => visibility.AsVisible(true);
         }
 
-        public static void HideCursorOnActive(this Window window)
-        {
-            var visibility = new CursorVisibility();
-            window.Activated += (sender, args) => visibility.AsVisible(false);
-            window.Deactivated += (sender, args) => visibility.AsVisible(true);
-        }
-
         public static void HideCursorOnFocus(this Control control)
         {
             var visibility = new CursorVisibility();
             control.GotFocus += (sender, args) => visibility.AsVisible(false);
             control.LostFocus += (sender, args) => visibility.AsVisible(true);
             control.Disposed += (sender, args) => visibility.AsVisible(true);
+        }
+
+        public static void HideCursorOnActivated(this Window window)
+        {
+            var visibility = new CursorVisibility();
+            window.Activated += (sender, args) => visibility.AsVisible(false);
+            window.Deactivated += (sender, args) => visibility.AsVisible(true);
+        }
+
+        public static void HideCursorOnActivated(this Form form)
+        {
+            var visibility = new CursorVisibility();
+            form.Activated += (sender, args) => visibility.AsVisible(false);
+            form.Deactivate += (sender, args) => visibility.AsVisible(true);
         }
 
         public static void HideCursorInside(this UIElement element)
