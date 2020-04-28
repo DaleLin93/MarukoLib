@@ -1,0 +1,195 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{F3D0153F-1BE4-4CBB-9A0B-4BC655CAF5E5}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MarukoLib.Parametrization</RootNamespace>
+    <AssemblyName>MarukoLib.Parametrization</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+    <OutputPath>bin\x86\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="JetBrains.Annotations, Version=2019.1.3.0, Culture=neutral, PublicKeyToken=1010a0d8d6380325, processorArchitecture=MSIL">
+      <HintPath>..\..\SharpBCI\packages\JetBrains.Annotations.2019.1.3\lib\net20\JetBrains.Annotations.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\SharpBCI\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Data\AutoParameterizedObject.cs" />
+    <Compile Include="Data\Border.cs" />
+    <Compile Include="Data\CharSeqParams.cs" />
+    <Compile Include="Data\ComplexObject.cs" />
+    <Compile Include="Data\Dimensions.cs" />
+    <Compile Include="Data\Endpoint.cs" />
+    <Compile Include="Data\Margins.cs" />
+    <Compile Include="Data\Optional.cs" />
+    <Compile Include="Data\OptionalText.cs" />
+    <Compile Include="Data\ParameterizedObject.cs" />
+    <Compile Include="Data\Path.cs" />
+    <Compile Include="Data\Positions.cs" />
+    <Compile Include="Data\RandomTargetRate.cs" />
+    <Compile Include="Data\Range.cs" />
+    <Compile Include="Data\Rectangle.cs" />
+    <Compile Include="Data\RectangleLayout.cs" />
+    <Compile Include="Data\RoundedRectangle.cs" />
+    <Compile Include="Data\TimeInterval.cs" />
+    <Compile Include="GlobalContext.cs" />
+    <Compile Include="Parameter.cs" />
+    <Compile Include="Presenters\BooleanPresenter.cs" />
+    <Compile Include="Presenters\ColorPresenter.cs" />
+    <Compile Include="Presenters\DateTimePresenter.cs" />
+    <Compile Include="Presenters\EndpointPresenter.cs" />
+    <Compile Include="Presenters\MultiParameterPresenter.cs" />
+    <Compile Include="Presenters\MultiValuePresenter.cs" />
+    <Compile Include="Presenters\OptionalPresenter.cs" />
+    <Compile Include="Presenters\ParameterizedObjectPresenter.cs" />
+    <Compile Include="Presenters\PathPresenter.cs" />
+    <Compile Include="Presenters\PlainOrdinaryStructPresenter.cs" />
+    <Compile Include="Presenters\PlainTextPresenter.cs" />
+    <Compile Include="Presenters\PositionPresenter.cs" />
+    <Compile Include="Presenters\Presenter.cs" />
+    <Compile Include="Presenters\RangePresenter.cs" />
+    <Compile Include="Presenters\SelectablePresenter.cs" />
+    <Compile Include="Presenters\SliderNumberPresenter.cs" />
+    <Compile Include="Presenters\TypeConvertedPresenter.cs" />
+    <Compile Include="Presenters\UriPresenter.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TypeConverters.cs" />
+    <Compile Include="Windows\ContextChangedEventArgs.cs" />
+    <Compile Include="Windows\GroupHeader.xaml.cs">
+      <DependentUpon>GroupHeader.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\LayoutChangedEventArgs.cs" />
+    <Compile Include="Windows\ParameterizedConfigWindow.xaml.cs">
+      <DependentUpon>ParameterizedConfigWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\ParameterPanel.cs" />
+    <Compile Include="Windows\PresentAdapters.cs" />
+    <Compile Include="Windows\ViewConsts.cs" />
+    <Compile Include="Windows\ViewHelper.cs" />
+    <Compile Include="Windows\ViewModels.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MarukoLib.Lang\MarukoLib.Lang.csproj">
+      <Project>{cdc6516e-2114-4e81-8ba0-9d3e93f8da15}</Project>
+      <Name>MarukoLib.Lang</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MarukoLib.Logging\MarukoLib.Logging.csproj">
+      <Project>{36b35a27-9e3c-4a7b-870b-9df3b1fe534b}</Project>
+      <Name>MarukoLib.Logging</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MarukoLib.Persistence\MarukoLib.Persistence.csproj">
+      <Project>{75efb011-f3ac-471d-87e5-c7607f44eb80}</Project>
+      <Name>MarukoLib.Persistence</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MarukoLib\MarukoLib.csproj">
+      <Project>{2f30247b-bb53-41d0-ad4e-845550366a96}</Project>
+      <Name>MarukoLib</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Alert.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\BackgroundPattern.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="Resources\SharedResourceDictionary.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Windows\GroupHeader.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Windows\ParameterizedConfigWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Reset.png" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
