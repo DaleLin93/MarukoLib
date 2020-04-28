@@ -57,7 +57,7 @@ namespace MarukoLib.UI
             get
             {
                 var screens = Screen.AllScreens;
-                var scaleFactor = GraphicsUtils.Scale;
+                var scaleFactor = DpiUtils.Scale;
                 var output = new ScreenInfo[screens.Length];
                 for (var i = 0; i < screens.Length; i++) output[i] = new ScreenInfo(i, screens[i], scaleFactor);
                 return output;

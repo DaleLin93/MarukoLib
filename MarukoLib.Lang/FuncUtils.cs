@@ -62,15 +62,15 @@ namespace MarukoLib.Lang
 
         [SuppressMessage("ReSharper", "AssignNullToNotNullAttribute")]
         public static Func<TR> ContinueWith<TR>([NotNull] this Func<TR> func, [CanBeNull, ItemCanBeNull] params Func<TR, TR>[] functions) 
-            => ArrayUtils.IsNullOrEmpty(functions) ? func : () => functions.Where(Predicates.NotNull).Aggregate(func(), (current, f) => f(current));
+            => ArrayUtils.IsNullOrEmpty(functions) ? func : () => functions.NotNull().Aggregate(func(), (current, f) => f(current));
 
         [SuppressMessage("ReSharper", "AssignNullToNotNullAttribute")]
         public static Func<TP, TR> ContinueWith<TP, TR>([NotNull] this Func<TP, TR> func, [CanBeNull, ItemCanBeNull] params Func<TR, TR>[] functions)
-            => ArrayUtils.IsNullOrEmpty(functions) ? func : p => functions.Where(Predicates.NotNull).Aggregate(func(p), (current, f) => f(current));
+            => ArrayUtils.IsNullOrEmpty(functions) ? func : p => functions.NotNull().Aggregate(func(p), (current, f) => f(current));
 
         [SuppressMessage("ReSharper", "AssignNullToNotNullAttribute")]
         public static Func<TP1, TP2, TR> ContinueWith<TP1, TP2, TR>([NotNull] this Func<TP1, TP2, TR> func, [CanBeNull, ItemCanBeNull] params Func<TR, TR>[] functions)
-            => ArrayUtils.IsNullOrEmpty(functions) ? func : (p1, p2) => functions.Where(Predicates.NotNull).Aggregate(func(p1, p2), (current, f) => f(current));
+            => ArrayUtils.IsNullOrEmpty(functions) ? func : (p1, p2) => functions.NotNull().Aggregate(func(p1, p2), (current, f) => f(current));
 
     }
 

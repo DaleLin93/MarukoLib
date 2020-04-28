@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 
 namespace MarukoLib.Lang.Concurrent
 {
@@ -9,45 +10,42 @@ namespace MarukoLib.Lang.Concurrent
         public class MinimumInterval : FrequencyBarrier
         {
 
-            private readonly object _sync = new object();
-
             private readonly IClock _clock;
 
             private readonly long _minimumInterval;
 
-            private long? _last;
+            private readonly IAtomic<long> _nextAt;
 
-            public MinimumInterval(IClock clock, TimeSpan timeSpan)
-                : this(clock, TimeUnit.Tick.ConvertTo(timeSpan.Ticks, clock.Unit)) { }
+            public MinimumInterval([NotNull] IClock clock, TimeSpan timeSpan)
+                : this(clock.As(TimeUnit.Tick), timeSpan.Ticks) { }
 
-            public MinimumInterval(IClock clock, long minimumInterval)
+            public MinimumInterval([NotNull] IClock clock, long minimumInterval)
             {
+                if (minimumInterval < 0) throw new ArgumentException($"Parameter '{nameof(minimumInterval)}' must be non-negative.");
                 _clock = clock;
                 _minimumInterval = minimumInterval;
+                _nextAt = Atomics.Long(_clock.Time);
             }
 
             public override bool WaitOne(int millisecondsTimeout)
             {
+                var instant = millisecondsTimeout == 0;
                 var timing = millisecondsTimeout > 0;
                 var startTime = timing ? DateTimeUtils.CurrentTimeMillis : -1;
                 do
                 {
-                    lock (_sync)
-                    {
-                        var time = _clock.Time;
-                        if (_last == null || time - _last.Value >= _minimumInterval)
-                        {
-                            _last = time;
-                            return true;
-                        }
-                    }
-                } while (!timing || DateTimeUtils.CurrentTimeMillis - startTime < millisecondsTimeout);
+                    var time = _clock.Time;
+                    var nextAt = _nextAt.Get();
+                    if (time >= nextAt && _nextAt.CompareAndSet(nextAt, time + _minimumInterval))
+                        return true;
+                } while (!instant && (!timing || DateTimeUtils.CurrentTimeMillis - startTime < millisecondsTimeout));
                 return false;
             }
 
         }
 
-        public static FrequencyBarrier WithMinimumInterval(long intervalMillis) => new MinimumInterval(Clock.SystemMillisClock, intervalMillis);
+        public static FrequencyBarrier MinIntervalSecs(double intervalSecs, IClock clock = null) 
+            => new MinimumInterval(clock ?? Clocks.SystemMillisClock, TimeSpan.FromSeconds(intervalSecs));
 
         public abstract bool WaitOne(int millisecondsTimeout);
 
@@ -55,6 +53,8 @@ namespace MarukoLib.Lang.Concurrent
 
     public static class FrequencyBarrierExt
     {
+
+        public static bool GetOne(this FrequencyBarrier frequencyBarrier) => frequencyBarrier.WaitOne(0);
 
         public static bool WaitOne(this FrequencyBarrier frequencyBarrier) => frequencyBarrier.WaitOne(-1);
 

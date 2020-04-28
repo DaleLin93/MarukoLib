@@ -10,12 +10,59 @@ namespace MarukoLib.Lang
     public sealed class ArrayQuery 
     {
 
+        [Flags]
+        public enum BoundType 
+        {
+            None = 0, 
+            Lower = 1, 
+            Upper = 2, 
+            All = 3
+        }
+
+        public class Bounds
+        {
+
+            public static readonly Bounds Unbounded = new Bounds();
+
+            public readonly double Lower, Upper;
+
+            public readonly double Tolerance;
+
+            private Bounds() : this(double.NaN, double.NaN, double.NaN) { }
+
+            public Bounds(double lower, double upper, double tolerance = double.NaN)
+            {
+                Lower = lower;
+                Upper = upper;
+                Tolerance = Math.Abs(tolerance);
+                Type = (double.IsNaN(Lower) ? BoundType.None : BoundType.Lower) 
+                       | (double.IsNaN(Upper) ? BoundType.None : BoundType.Upper);
+            }
+
+            public BoundType Type { get; }
+
+            public bool IsProvided(BoundType requirement) => (requirement & Type) == requirement;
+
+            public bool Check(double value)
+            {
+                bool outOfBound;
+                if (double.IsNaN(Tolerance))
+                    outOfBound = value < Lower || value > Upper;
+                else
+                    outOfBound = value < Lower - Tolerance || value > Upper + Tolerance;
+                return !outOfBound;
+            }
+
+            public override string ToString() => $"[{Lower},{Upper}]{{{Tolerance}}}";
+
+        }
+
         private interface IValue
         {
 
-            bool IsBoundsRequired { get; }
+            BoundType RequiredBound { get; }
 
-            double Evaluate([CanBeNull] Pair<double> bounds);
+            double Evaluate([NotNull] Bounds bounds);
 
         }
 
@@ -26,9 +73,9 @@ namespace MarukoLib.Lang
 
             public double Constant { get; }
 
-            public bool IsBoundsRequired => false;
+            public BoundType RequiredBound => BoundType.None;
 
-            public double Evaluate(Pair<double> bounds) => Constant;
+            public double Evaluate(Bounds bounds) => Constant;
 
         }
 
@@ -48,19 +95,33 @@ namespace MarukoLib.Lang
 
             public DependentType Type { get; }
 
-            public bool IsBoundsRequired => true;
-
-            public double Evaluate(Pair<double> bounds)
+            public BoundType RequiredBound
             {
-                if (bounds == null) throw new ArgumentException($"bounds is required for dependent value: {Type}");
+                get
+                {
+                    switch (Type)
+                    {
+                        case DependentType.Start:
+                            return BoundType.Lower;
+                        case DependentType.End:
+                            return BoundType.Upper;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                }
+            }
+
+            public double Evaluate(Bounds bounds)
+            {
+                if (bounds == null) throw new ArgumentException($"bounds is required for dependent value: {Type}.");
                 switch (Type)
                 {
                     case DependentType.Start:
-                        return bounds.Left;
+                        return bounds.Lower;
                     case DependentType.End:
-                        return bounds.Right;
+                        return bounds.Upper;
                     default:
-                        throw new Exception($"Unsupported dependent type: {Type}"); 
+                        throw new Exception($"Unsupported dependent type: {Type}."); 
                 }
             }
         }
@@ -68,7 +129,7 @@ namespace MarukoLib.Lang
         private interface IExpression
         {
 
-            IReadOnlyCollection<double> Evaluate([CanBeNull] Pair<double> bounds, bool strict);
+            IReadOnlyCollection<double> Evaluate([NotNull] Bounds bounds, bool strict);
 
         }
 
@@ -79,14 +140,17 @@ namespace MarukoLib.Lang
 
             public IValue Value { get; }
 
-            public IReadOnlyCollection<double> Evaluate(Pair<double> bounds, bool strict)
+            public IReadOnlyCollection<double> Evaluate(Bounds bounds, bool strict)
             {
-                if (bounds == null && Value.IsBoundsRequired)
+                if (!bounds.IsProvided(Value.RequiredBound))
                 {
-                    if (strict) throw new ArgumentException("bounds not provided");
+                    if (strict) throw new ArgumentException("Required bound value not provided.");
                     return EmptyArray<double>.Instance;
                 }
-                return new[] {Value.Evaluate(bounds)};
+                var value = Value.Evaluate(bounds);
+                if (strict && !bounds.Check(value)) 
+                    throw new ArgumentException($"Value '{value}' exceed bounds {bounds}.");
+                return new[] {value};
             } 
 
         }
@@ -107,14 +171,24 @@ namespace MarukoLib.Lang
 
             public IValue StepValue { get; }
 
-            public IReadOnlyCollection<double> Evaluate(Pair<double> bounds, bool strict)
+            public IReadOnlyCollection<double> Evaluate(Bounds bounds, bool strict)
             {
-                if (bounds == null && (StartValue.IsBoundsRequired || EndValue.IsBoundsRequired || (StepValue?.IsBoundsRequired ?? false)))
+                if (!bounds.IsProvided(StepValue?.RequiredBound ?? BoundType.None) 
+                    || !bounds.IsProvided(StartValue.RequiredBound) || !bounds.IsProvided(EndValue.RequiredBound))
                 {
-                    if (strict) throw new ArgumentException("bounds not provided");
+                    if (strict) throw new ArgumentException("Required bound not provided.");
                     return EmptyArray<double>.Instance;
                 }
-                return ArrayUtils.Doubles(StartValue.Evaluate(bounds), true, EndValue.Evaluate(bounds), true, StepValue?.Evaluate(bounds) ?? 1);
+                var startValue = StartValue.Evaluate(bounds);
+                var endValue = EndValue.Evaluate(bounds);
+                if (strict)
+                {
+                    if (!bounds.Check(startValue))
+                        throw new ArgumentException($"Start value '{startValue}' exceed bounds {bounds}.");
+                    if (!bounds.Check(endValue))
+                        throw new ArgumentException($"End value '{endValue}' exceed bounds {bounds}.");
+                }
+                return ArrayUtils.Doubles(startValue, true, endValue, true, StepValue?.Evaluate(bounds) ?? 1);
             }
 
         }
@@ -123,15 +197,15 @@ namespace MarukoLib.Lang
 
         private readonly ICollection<IExpression> _expressions;
 
-        public ArrayQuery(string query)
+        public ArrayQuery([NotNull] string query)
         {
             Query = query ?? throw new ArgumentNullException(nameof(query));
             _expressions = Parse(query);
         }
 
-        private static ICollection<IExpression> Parse(string query)
+        private static ICollection<IExpression> Parse([CanBeNull] string query)
         {
-            if (query.IsBlank()) return EmptyArray<IExpression>.Instance;
+            if (string.IsNullOrWhiteSpace(query)) return EmptyArray<IExpression>.Instance;
             var expressions = new LinkedList<IExpression>();
             foreach (var segment in query.Split(',', ' ').Select(str => str.Trim()).Where(str => !str.IsEmpty()))
                 expressions.AddLast(ParseExpression(segment));
@@ -139,7 +213,7 @@ namespace MarukoLib.Lang
         }
 
         [SuppressMessage("ReSharper", "ArgumentsStyleOther")]
-        private static IExpression ParseExpression(string expression)
+        private static IExpression ParseExpression([NotNull] string expression)
         {
             int colonIndex;
             if (":".Equals(expression))
@@ -163,8 +237,8 @@ namespace MarukoLib.Lang
                     rPart = expression.Substring(secondColonIndex + 1).Trim();
                 }
                 return new RangeExpression(
-                    startValue: lPart.IsBlank() ? DependentValue.StartValue : ParseValue(lPart),
-                    endValue: rPart.IsBlank() ? DependentValue.EndValue : ParseValue(rPart), 
+                    startValue: string.IsNullOrWhiteSpace(lPart) ? DependentValue.StartValue : ParseValue(lPart),
+                    endValue: string.IsNullOrWhiteSpace(rPart) ? DependentValue.EndValue : ParseValue(rPart), 
                     stepValue: mPart == null ? null : ParseValue(mPart));
             }
             return new ValueExpression(ParseValue(expression));
@@ -185,11 +259,11 @@ namespace MarukoLib.Lang
 
         public string Query { get; }
 
-        public IReadOnlyCollection<double> Enumerate(double lowerBound, double upperBound) => Enumerate(new Pair<double>(lowerBound, upperBound), true);
+        public IReadOnlyCollection<double> Enumerate(double lowerBound, double upperBound) => Enumerate(new Bounds(lowerBound, upperBound), true);
 
-        public IReadOnlyCollection<double> Enumerate() => Enumerate(null, false);
+        public IReadOnlyCollection<double> Enumerate() => Enumerate(Bounds.Unbounded, false);
 
-        public IReadOnlyCollection<double> Enumerate([CanBeNull] Pair<double> bounds, bool strict) => 
+        public IReadOnlyCollection<double> Enumerate([NotNull] Bounds bounds, bool strict) => 
             _expressions.Aggregate((IReadOnlyCollection<double>)EmptyArray<double>.Instance, (current, expression) =>
             {
                 var array = expression.Evaluate(bounds, strict);
@@ -204,7 +278,7 @@ namespace MarukoLib.Lang
 
         public IReadOnlyCollection<T> Enumerate<T>([CanBeNull] Pair<T> bounds, bool strict, ITypeConverter<double, T> converter)
         {
-            var doubleBounds = bounds == null ? null : new Pair<double>(converter.ConvertBackward(bounds.Left), converter.ConvertBackward(bounds.Right));
+            var doubleBounds = bounds == null ? Bounds.Unbounded : new Bounds(converter.ConvertBackward(bounds.Left), converter.ConvertBackward(bounds.Right));
             var collection = Enumerate(doubleBounds, strict);
             return CollectionUtils.ReadonlyCollection<double>.Unwrap(collection)
                 .Select(converter.ConvertForward)

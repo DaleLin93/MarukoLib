@@ -65,38 +65,55 @@ namespace MarukoLib.Lang
         /// The value must be monotone increasing by time.
         /// </summary>
         long Time { get; }
-        
+
+        /// <summary>
+        /// The speed of the clock corresponding to the real world.
+        /// </summary>
+        decimal Speed { get; }
+
     }
 
     public abstract class Clock : IClock
     {
 
-        private sealed class Delegated : Clock
-        {
-
-            private readonly Supplier<long> _supplier;
-
-            public Delegated(Supplier<long> supplier, TimeUnit unit) : base(unit) 
-                => _supplier = supplier ?? throw new ArgumentNullException(nameof(supplier));
-
-            public override long Time => _supplier();
-
-        }
-
-        public static readonly Clock SystemTicksClock = Of(() => DateTimeUtils.CurrentTimeTicks, TimeUnit.Tick);
-
-        // ReSharper disable once InconsistentNaming
-        public static readonly Clock TicksFromJan1st1970Clock = Of(() => DateTimeUtils.CurrentTimeTicks - DateTimeUtils.Jan1st1970Ticks, TimeUnit.Tick);
-
-        public static readonly Clock SystemMillisClock = Of(() => DateTimeUtils.CurrentTimeMillis, TimeUnit.Millisecond);
-
         protected Clock(TimeUnit unit) => Unit = unit;
-
-        public static Clock Of([NotNull] Supplier<long> supplier, TimeUnit unit) => new Delegated(supplier, unit);
 
         public TimeUnit Unit { get; }
 
         public abstract long Time { get; }
+
+        public abstract decimal Speed { get; }
+
+    }
+
+    public sealed class UtcTickClock : Clock
+    {
+
+        public static readonly UtcTickClock FromJan1st1970 = new UtcTickClock(-DateTimeUtils.Jan1st1970UtcTicks);
+
+        public UtcTickClock(long offset = 0) : base(TimeUnit.Tick) => Offset = offset;
+
+        public long Offset { get; }
+
+        public override long Time => DateTime.UtcNow.Ticks + Offset;
+
+        public override decimal Speed => 1;
+    } 
+
+    public sealed class DelegatedClock : Clock
+    {
+
+        private readonly Supplier<long> _supplier;
+
+        public DelegatedClock(Supplier<long> supplier, TimeUnit unit, decimal speed) : base(unit)
+        {
+            _supplier = supplier ?? throw new ArgumentNullException(nameof(supplier));
+            Speed = speed;
+        }
+
+        public override long Time => _supplier();
+
+        public override decimal Speed { get; }
 
     }
 
@@ -111,6 +128,8 @@ namespace MarukoLib.Lang
         [NotNull] public IClock OriginalClock { get; }
 
         public override long Time => Unit == OriginalClock.Unit ? OriginalClock.Time : OriginalClock.Get(Unit);
+
+        public override decimal Speed => OriginalClock.Speed;
 
     }
 
@@ -268,6 +287,16 @@ namespace MarukoLib.Lang
             Unfrozen?.Invoke(this, EventArgs.Empty);
             return true;
         }
+    }
+
+    public static class Clocks
+    {
+
+        public static readonly IClock SystemTicksClock = UtcTickClock.FromJan1st1970;
+
+        public static readonly IClock SystemMillisClock = new OverridenClock(SystemTicksClock, TimeUnit.Millisecond);
+
+        public static IClock Of([NotNull] Supplier<long> supplier, TimeUnit unit, decimal speed = 1) => new DelegatedClock(supplier, unit, speed);
 
     }
 
@@ -276,12 +305,12 @@ namespace MarukoLib.Lang
 
         public static IClock As([NotNull] this IClock clock, TimeUnit timeUnit)
         {
-            for (;;)
+            for (; ; )
             {
                 if (clock.Unit == timeUnit) return clock;
-                if (clock is OverridenClock converted)
+                if (clock.GetType() == typeof(OverridenClock))
                 {
-                    clock = converted.OriginalClock;
+                    clock = ((OverridenClock)clock).OriginalClock;
                     continue;
                 }
                 return new OverridenClock(clock, timeUnit);
@@ -312,7 +341,12 @@ namespace MarukoLib.Lang
 
         public static long GetTicks([NotNull] this IClock clock) => Get(clock, TimeUnit.Tick);
 
-        public static long Get([NotNull] this IClock clock, TimeUnit timeUnit) => clock.Unit.ConvertTo(clock.Time, timeUnit);
+        public static long Get([NotNull] this IClock clock, TimeUnit unit)
+        {
+            while (clock.GetType() == typeof(OverridenClock))
+                clock = ((OverridenClock)clock).OriginalClock;
+            return clock.Unit.ConvertTo(clock.Time, unit);
+        }
 
         public static TimeSpan GetTimeSpan([NotNull] this IClock clock) => new TimeSpan(clock.Time * (long)clock.Unit);
 

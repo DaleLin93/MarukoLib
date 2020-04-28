@@ -63,10 +63,22 @@ namespace MarukoLib.Lang.Concurrent
         /// </summary>
         public abstract void Compute(UnaryOperator<T> @operator, out T oldValue, out T newValue);
 
-        object IContainer.Value => Get();
+        bool IContainer.IsReadOnly => false;
 
-        T IContainer<T>.Value => Get();
-        
+        bool IContainer<T>.IsReadOnly => false;
+
+        object IContainer.Value
+        {
+            get => Get();
+            set => Set((T) value);
+        }
+
+        T IContainer<T>.Value
+        {
+            get => Get();
+            set => Set(value);
+        }
+
     }
 
     public sealed class AtomicBool : AbstractAtomic<bool>

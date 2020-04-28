@@ -4,6 +4,11 @@ using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using SharpDX.Direct2D1;
 using SharpDX.Mathematics.Interop;
+using SdC = System.Drawing.Color;
+using SwmC = System.Windows.Media.Color;
+using SdxC = SharpDX.Color;
+using SdRect = System.Drawing.Rectangle;
+using SdBitmap = System.Drawing.Bitmap;
 using PixelFormat = SharpDX.Direct2D1.PixelFormat;
 
 namespace MarukoLib.DirectX
@@ -13,19 +18,19 @@ namespace MarukoLib.DirectX
     public static class SharpDXUtils
     {
 
-        public static System.Drawing.Color ToSd(this SharpDX.Color color) => System.Drawing.Color.FromArgb(color.A, color.R, color.G, color.B);
+        public static SdC ToSdColor(this SdxC color) => SdC.FromArgb(color.A, color.R, color.G, color.B);
 
-        public static System.Windows.Media.Color ToSwm(this SharpDX.Color color) => System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B);
+        public static SwmC ToSwColor(this SdxC color) => SwmC.FromArgb(color.A, color.R, color.G, color.B);
 
-        public static SharpDX.Color ToSdx(this System.Windows.Media.Color color) => new SharpDX.Color(color.ScR, color.ScG, color.ScB, color.ScA);
+        public static SdxC ToSdx(this SwmC color) => new SdxC(color.ScR, color.ScG, color.ScB, color.ScA);
 
-        public static SharpDX.Color ToSdx(this System.Drawing.Color color)
+        public static SdxC ToSdx(this SdC color)
         {
             const float n = 255f;
-            return new SharpDX.Color(color.R / n, color.G / n, color.B / n, color.A / n);
+            return new SdxC(color.R / n, color.G / n, color.B / n, color.A / n);
         }
 
-        public static RawColor4 ToRaw4(this SharpDX.Color color)
+        public static RawColor4 ToRaw4(this SdxC color)
         {
             const float n = 255f;
             return new RawColor4(color.R / n, color.G / n, color.B / n, color.A / n);
@@ -33,7 +38,7 @@ namespace MarukoLib.DirectX
 
         public static RawVector2 Multiply(this RawVector2 vec, float scale) => new RawVector2(vec.X * scale, vec.Y * scale);
 
-        public static RawRectangleF ToRawRectangleF(this System.Drawing.Rectangle rect) => new RawRectangleF(rect.Left, rect.Top, rect.Right, rect.Bottom);
+        public static RawRectangleF ToRawRectangleF(this SdRect rect) => new RawRectangleF(rect.Left, rect.Top, rect.Right, rect.Bottom);
 
         public static RawRectangleF GetBounds(this IEnumerable<RawRectangleF> rectangles)
         {
@@ -138,11 +143,11 @@ namespace MarukoLib.DirectX
         public static RawMatrix3x2 Rotate(this RawMatrix3x2 matrix, float angle) =>
             SharpDX.Matrix3x2.Multiply(SharpDX.Matrix3x2.Rotation(angle), matrix);
 
-        public static Bitmap ToD2D1Bitmap(this System.Drawing.Bitmap bitmap, RenderTarget renderTarget) => ToD2D1Bitmap(bitmap, renderTarget, renderTarget.PixelFormat);
+        public static Bitmap ToD2D1Bitmap(this SdBitmap bitmap, RenderTarget renderTarget) => ToD2D1Bitmap(bitmap, renderTarget, renderTarget.PixelFormat);
 
-        public static Bitmap ToD2D1Bitmap(this System.Drawing.Bitmap bitmap, RenderTarget renderTarget, PixelFormat pixelFormat)
+        public static Bitmap ToD2D1Bitmap(this SdBitmap bitmap, RenderTarget renderTarget, PixelFormat pixelFormat)
         {
-            var sourceArea = new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height);
+            var sourceArea = new SdRect(0, 0, bitmap.Width, bitmap.Height);
             var bitmapProperties = new BitmapProperties(pixelFormat);
             var size = new SharpDX.Size2(bitmap.Width, bitmap.Height);
 
@@ -173,9 +178,9 @@ namespace MarukoLib.DirectX
             }
         }
 
-        public static void CopyToD2D1Bitmap(this System.Drawing.Bitmap bitmap, Bitmap targetBitmap)
+        public static void CopyToD2D1Bitmap(this SdBitmap bitmap, Bitmap targetBitmap)
         {
-            var sourceArea = new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height);
+            var sourceArea = new SdRect(0, 0, bitmap.Width, bitmap.Height);
 
             // Transform pixels from BGRA to RGBA.
             var stride = bitmap.Width * sizeof(int);

@@ -13,6 +13,16 @@ namespace MarukoLib.Lang
     public static class EnumerableUtils
     {
 
+        public static LinkedList<T> ToLinkedList<T>(this IEnumerable<T> enumerable)
+        {
+            var linkedList = new LinkedList<T>();
+            linkedList.AddAll(enumerable);
+            return linkedList;
+        }
+
+        public static IEnumerable<Type> IsSubclassOf([NotNull] this IEnumerable<Type> enumerable, [NotNull] Type type)
+            => enumerable.Where(type.IsAssignableFrom);
+
         [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
         public static IReadOnlyCollection<T> AsReadonlyCollection<T>([NotNull] this IEnumerable<T> enumerable)
         {
@@ -31,7 +41,14 @@ namespace MarukoLib.Lang
 
         public static int Count([NotNull] this IEnumerable enumerable) => Enumerable.Count(enumerable.Cast<object>());
 
-        public static IEnumerable<T> Not<T>([NotNull] this IEnumerable<T> enumerable, [NotNull] Predicate<T> predicate) => enumerable.Where(t => !predicate(t));
+        public static IEnumerable<T> Not<T>([NotNull] this IEnumerable<T> enumerable, [NotNull] Predicate<T> predicate)
+            => enumerable.Where(t => !predicate(t));
+
+        public static IEnumerable<T> NotNull<T>([NotNull] this IEnumerable<T?> enumerable) where T : struct
+            => enumerable.Where(t => t.HasValue).Select(t => t.Value);
+
+        public static IEnumerable<T> NotNull<T>([NotNull] this IEnumerable<T> enumerable) where T : class
+            => enumerable.Where(Predicates.NotNull);
 
         public static string Join<T>([NotNull] this IEnumerable<T> enumerable, [NotNull] string separator, [CanBeNull] Func<T, object> convertFunc = null)
         {

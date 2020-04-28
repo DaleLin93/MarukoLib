@@ -42,8 +42,11 @@ namespace MarukoLib.Lang.Sequence
 
         public PseudoRandomBools(decimal targetRate) : this(targetRate, (int)DateTimeUtils.CurrentTimeTicks) { }
 
-        public PseudoRandomBools(decimal targetRate, int seed) : base(seed, new RandomTarget<bool>(true, targetRate), new RandomTarget<bool>(false, 1 - targetRate))
+        public PseudoRandomBools(decimal targetRate, int seed) : base(seed, null, DefaultRandomness, CreateRandomTargets(targetRate))
             => TargetRate = targetRate;
+
+        private static RandomTarget<bool>[] CreateRandomTargets(decimal targetRate)
+            => new[] { new RandomTarget<bool>(true, targetRate), new RandomTarget<bool>(false, 1 - targetRate) };
 
         public decimal TargetRate { get; }
 

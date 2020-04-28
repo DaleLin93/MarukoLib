@@ -149,15 +149,15 @@ namespace MarukoLib.IO
         public static string NormalizeSuffix(string suffix) => suffix == null ? null : suffix.Length > 0 && suffix[0] != '.' ? $".{suffix}" : suffix;
 
         public static string MergeFilterPatterns([CanBeNull, ItemCanBeNull] params string[] patterns) 
-            => patterns?.Select(StringUtils.Trim2Null).Where(Predicates.NotNull).Distinct()
+            => patterns?.Select(StringUtils.Trim2Null).NotNull().Distinct()
                 .Aggregate<string, string>(null, (a, b) => a == null ? b : $"{a}|{b}");
 
         public static string GetFileFilterPattern([CanBeNull] string desc, [CanBeNull, ItemCanBeNull] params string[] extensions)
         {
-            var extFilter = extensions?.Select(StringUtils.Trim2Null).Where(Predicates.NotNull)
-                .Select(ext => $"*.{NormalizeSuffix(ext)}").Distinct().Aggregate<string, string>(null, (a, b) => a == null ? b : $"{a},{b}");
+            var extFilter = extensions?.Select(StringUtils.Trim2Null).NotNull()
+                .Select(ext => $"*{NormalizeSuffix(ext)}").Distinct().Aggregate<string, string>(null, (a, b) => a == null ? b : $"{a},{b}");
             if (string.IsNullOrEmpty(extFilter)) extFilter = "*.*";
-            return string.IsNullOrWhiteSpace(desc) ? $"{extFilter}|{extFilter}" : $"{desc} ({extFilter})|*{extFilter}";
+            return string.IsNullOrWhiteSpace(desc) ? $"{extFilter}|{extFilter}" : $"{desc} ({extFilter})|{extFilter}";
         }
 
         public static bool IsValidFileName([CanBeNull] string fileName) 
@@ -181,6 +181,30 @@ namespace MarukoLib.IO
             fileName = stringBuilder.ToString();
             if (checkValid && string.IsNullOrWhiteSpace(fileName)) throw new ArgumentException();
             return fileName;
+        }
+
+        public static long GetFileLength(string file) => new FileInfo(file).Length;
+
+        public static bool DeleteIfBlank(string file, long fileSizeThreshold, Encoding encoding = null)
+        {
+            if (file == null) return false;
+            if (File.Exists(file) && GetFileLength(file) < fileSizeThreshold)
+            {
+                var text = File.ReadAllText(file, encoding ?? Encoding.Default);
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    try
+                    {
+                        File.Delete(file);
+                        return true;
+                    }
+                    catch (Exception)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return false;
         }
 
         /// <summary>

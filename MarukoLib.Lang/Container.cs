@@ -7,84 +7,120 @@ namespace MarukoLib.Lang
     public interface IContainer
     {
 
-        object Value { get; }
+        bool IsReadOnly { get; }
+
+        object Value { get; set; }
 
     }
 
-    public interface IContainer<out T>
+    public interface IContainer<T>
     {
 
-        T Value { get; }
+        bool IsReadOnly { get; }
+
+        T Value { get; set; }
 
     }
 
-    public sealed class Immutable<T> : IContainer, IContainer<T>
+    public sealed class Immutable<T> : IContainer<T>, IContainer
     {
 
-        public Immutable(T value) => Value = value;
+        private readonly T _value;
 
-        public T Value { get; }
+        public Immutable(T value) => _value = value;
 
-        object IContainer.Value => Value;
+        public bool IsReadOnly => true;
+
+        public T Value
+        {
+            get => _value;
+            set => throw new NotSupportedException();
+        }
+
+        object IContainer.Value
+        {
+            get => _value;
+            set => throw new NotSupportedException();
+        }
 
     }
 
-    public sealed class Mutable<T> : IContainer, IContainer<T>
+    public sealed class Mutable<T> : IContainer<T>, IContainer
     {
 
         public Mutable() {}
 
         public Mutable(T value) => Value = value;
 
+        public bool IsReadOnly => false;
+
         public T Value { get; set; }
 
-        object IContainer.Value => Value;
+        object IContainer.Value
+        {
+            get => Value;
+            set => Value = (T) value;
+        }
 
     }
     
-    public sealed class Memoized<T> : IContainer, IContainer<T>
+    public sealed class Memoized<T> : IContainer<T>, IContainer
     {
 
-        private readonly Supplier<T> _supplier;
+        [NotNull] private readonly IContainer<T> _container;
 
-        private readonly Clock _clock;
+        [NotNull] private readonly Clock _clock;
 
-        private readonly uint? _expiration;
+        private readonly uint _expiration;
 
         private T _value;
 
-        private long? _valueTimestamp;
+        private long _expireAt;
 
-        public Memoized([NotNull] Supplier<T> supplier)
+        public Memoized([NotNull] IContainer<T> container, [NotNull] Clock clock, TimeSpan expiration) 
+            : this(container, clock, (uint) TimeUnit.Tick.ConvertTo(expiration.Ticks, clock.Unit)) { }
+
+        public Memoized([NotNull] IContainer<T> container, [NotNull] Clock clock, uint expiration)
         {
-            _supplier = supplier ?? throw new ArgumentNullException(nameof(supplier));
-            _clock = null;
-            _expiration = null;
-        }
-
-        public Memoized([NotNull] Supplier<T> supplier, [NotNull] Clock clock, TimeSpan timeSpan) 
-            : this(supplier, clock, (uint) TimeUnit.Tick.ConvertTo(timeSpan.Ticks, clock.Unit)) { }
-
-        public Memoized([NotNull] Supplier<T> supplier, [NotNull] Clock clock, uint expiration)
-        {
-            _supplier = supplier ?? throw new ArgumentNullException(nameof(supplier));
+            _container = container ?? throw new ArgumentNullException(nameof(container));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _expiration = expiration;
+            _expireAt = _clock.Time;
         }
+
+        public bool IsReadOnly => _container.IsReadOnly;
 
         public T Value
         {
             get
             {
-                var time = _clock?.Time ?? 0;
-                if (_valueTimestamp != null && (_expiration == null || !(time > _valueTimestamp + _expiration.Value))) return _value;
-                _value = _supplier();
-                _valueTimestamp = time;
+                var time = _clock.Time;
+                if (time < _expireAt) return _value;
+                _value = _container.Value;
+                _expireAt = time + _expiration;
                 return _value;
+            }
+            set
+            {
+                _container.Value = value;
+                _value = value;
             }
         }
 
-        object IContainer.Value => Value;
+        object IContainer.Value
+        {
+            get => Value;
+            set => Value = (T) value;
+        }
 
     }
+
+    public static class ContainerExt
+    {
+
+        public static IContainer<T> ToImmutable<T>(this IContainer<T> container) 
+            => container is Immutable<T> immutable ? immutable : new Immutable<T>(container.Value);
+
+    }
+
 }

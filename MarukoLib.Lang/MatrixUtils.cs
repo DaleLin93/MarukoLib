@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace MarukoLib.Lang
 {
@@ -19,18 +20,16 @@ namespace MarukoLib.Lang
             Row = 0, Col = 1
         }
 
-        public static int GetRowCount<T>(this T[,] mat) => mat.GetLength(0);
+        public static int GetRowCount<T>([NotNull] this T[,] mat) => mat.GetLength(0);
 
-        public static int GetColCount<T>(this T[,] mat) => mat.GetLength(1);
+        public static int GetColCount<T>([NotNull] this T[,] mat) => mat.GetLength(1);
 
-        public static T[,] Concat<T>(this T[,] mat, T[,] another, MatrixDimension dim)
+        public static T[,] Concat<T>([CanBeNull] this T[,] mat, [CanBeNull] T[,] another, MatrixDimension dim)
         {
+            if (mat == null || mat.Length == 0) return another ?? EmptyMatrix<T>.Instance;
+            if (another == null || another.Length == 0) return mat;
             if (dim != MatrixDimension.Row && dim != MatrixDimension.Col)
                 throw new ArgumentException($"Illegal dim: {dim}");
-            if (mat == null || mat.Length == 0)
-                return another ?? EmptyMatrix<T>.Instance;
-            if (another == null || another.Length == 0)
-                return mat;
             var concatDim = dim == MatrixDimension.Row ? MatrixDimension.Col : MatrixDimension.Row;
             var keptDim = dim;
             var keptDimLength = mat.GetLength((int)keptDim);

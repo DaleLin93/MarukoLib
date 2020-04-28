@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using JetBrains.Annotations;
 
 namespace MarukoLib.Lang
 {
@@ -13,15 +14,15 @@ namespace MarukoLib.Lang
 
         public const StringComparison StrictStrComp= StringComparison.Ordinal;
 
-        public static bool IsNullOrBlank(string str) => str == null || IsBlank(str);
+        public static bool IsNullOrBlank([CanBeNull] string str) => str == null || IsBlank(str);
 
-        public static bool IsNotEmpty(this string str) => !str.IsEmpty();
+        public static bool IsNotEmpty([NotNull] this string str) => !str.IsEmpty();
 
-        public static bool IsEmpty(this string str) => str.Length <= 0;
+        public static bool IsEmpty([NotNull] this string str) => str.Length <= 0;
 
-        public static bool IsNotBlank(this string str) => !str.IsBlank();
+        public static bool IsNotBlank([NotNull] this string str) => !str.IsBlank();
 
-        public static bool IsBlank(this string str)
+        public static bool IsBlank([NotNull] this string str)
         {
             if (str.IsEmpty()) return true;
             foreach (var c in str)
@@ -37,14 +38,14 @@ namespace MarukoLib.Lang
             return true;
         }
 
-        public static string ToPascalCase(this string str, CultureInfo culture = null) =>
+        public static string ToPascalCase([NotNull] this string str, [CanBeNull] CultureInfo culture = null) =>
             string.Concat(char.ToUpper(str[0], culture ?? CultureInfo.CurrentCulture), str.Substring(1));
 
-        public static string ToCamelCase(this string str, CultureInfo culture = null) =>
+        public static string ToCamelCase([NotNull] this string str, [CanBeNull] CultureInfo culture = null) =>
             string.Concat(char.ToLower(str[0], culture ?? CultureInfo.CurrentCulture), str.Substring(1));
 
         [SuppressMessage("ReSharper", "ConvertIfStatementToReturnStatement")]
-        public static string TrimOrPadLeft(this string str, int length, char pad)
+        public static string TrimOrPadLeft([CanBeNull] this string str, int length, char pad)
         {
             if (str == null) return new string(pad, length);
             if (str.Length == length) return str;
@@ -53,7 +54,7 @@ namespace MarukoLib.Lang
         }
 
         [SuppressMessage("ReSharper", "ConvertIfStatementToReturnStatement")]
-        public static string TrimOrPadRight(this string str, int length, char pad)
+        public static string TrimOrPadRight([CanBeNull] this string str, int length, char pad)
         {
             if (str == null) return new string(pad, length);
             if (str.Length == length) return str;
@@ -61,9 +62,9 @@ namespace MarukoLib.Lang
             return str.PadRight(length, pad);
         }
 
-        public static int IndexOf(this string self, string value, int startIndex)
+        public static int IndexOf([NotNull] this string self, [CanBeNull] string value, int startIndex)
         {
-            if (value.IsEmpty()) return -1;
+            if (string.IsNullOrEmpty(value)) return -1;
             var firstChar = value[0];
             for (;;)
             {
@@ -74,14 +75,15 @@ namespace MarukoLib.Lang
             }
         }
 
-        public static string Trim2Null(this string str) => (str = str.Trim()).IsEmpty() ? null : str;
+        public static string Trim2Null([NotNull] this string str) => (str = str.Trim()).IsEmpty() ? null : str;
 
-        public static string Trim2Null(this string str, params char[] chars) => (str = str.Trim(chars)).IsEmpty() ? null : str;
+        public static string Trim2Null([NotNull] this string str, params char[] chars) => (str = str.Trim(chars)).IsEmpty() ? null : str;
 
         public static bool IsPartlyEqual(this string str, int startIndex, string target, StringComparison comparison = StrictStrComp) =>
             startIndex >= 0 && startIndex <= str.Length - target.Length && string.Compare(str, startIndex, target, 0, target.Length, comparison) == 0;
 
-        public static bool TryTrim(this string str, string start, string end, out string result, bool multiple = true, StringComparison comparison = StrictStrComp)
+        public static bool TryTrim([NotNull] this string str, [CanBeNull] string start, [CanBeNull] string end, 
+            out string result, bool multiple = true, StringComparison comparison = StrictStrComp)
         {
             var startIndex = 0;
             var endIndex = str.Length;
@@ -107,7 +109,8 @@ namespace MarukoLib.Lang
             return true;
         }
 
-        public static bool TryTrimStart(this string str, string trim, out string result, bool multiple = true, StringComparison comparison = StrictStrComp)
+        public static bool TryTrimStart([NotNull] this string str, [CanBeNull] string trim, 
+            out string result, bool multiple = true, StringComparison comparison = StrictStrComp)
         {
             var trimCount = 0;
             if (!string.IsNullOrEmpty(trim))
@@ -125,10 +128,12 @@ namespace MarukoLib.Lang
             return true;
         }
 
-        public static bool TryTrimEnd(this string str, string trim, out string result, bool multiple = true, StringComparison comparison = StrictStrComp)
+        public static bool TryTrimEnd([NotNull] this string str, [CanBeNull] string trim, 
+            out string result, bool multiple = true, StringComparison comparison = StrictStrComp)
         {
             var trimCount = 0;
             if (!string.IsNullOrEmpty(trim))
+                // ReSharper disable once PossibleNullReferenceException
                 while (IsPartlyEqual(str, str.Length - trimCount - trim.Length, trim, comparison))
                 {
                     trimCount += trim.Length;
@@ -143,37 +148,43 @@ namespace MarukoLib.Lang
             return true;
         }
 
-        public static string Trim(this string str, string start, string end, bool multiple = true, StringComparison comparison = StrictStrComp) => 
+        public static string Trim([NotNull] this string str, [CanBeNull] string start, [CanBeNull] string end, bool multiple = true, StringComparison comparison = StrictStrComp) => 
             TryTrim(str, start, end, out var result, multiple, comparison) ? result : str;
 
-        public static string TrimStart(this string str, string trim, bool multiple = true, StringComparison comparison = StrictStrComp) => 
+        public static string TrimStart([NotNull] this string str, [CanBeNull] string trim, bool multiple = true, StringComparison comparison = StrictStrComp) => 
              TryTrimStart(str, trim, out var result, multiple, comparison) ? result : str;
 
-        public static string TrimEnd(this string str, string trim, bool multiple = true, StringComparison comparison = StrictStrComp) =>
+        public static string TrimEnd([NotNull] this string str, [CanBeNull] string trim, bool multiple = true, StringComparison comparison = StrictStrComp) =>
             TryTrimEnd(str, trim, out var result, multiple, comparison) ? result : str;
 
-        public static string[] GetLines(this string str) => Regex.Split(str, "\r\n|\r|\n");
+        public static string[] GetLines([NotNull] this string str) => Regex.Split(str, "\r\n|\r|\n");
 
-        public static string GetFirstLine(this string str)
+        public static string GetFirstLine([NotNull] this string str)
         {
             var index = str.IndexOf("\r\n", StringComparison.Ordinal);
             if (index == -1) index = str.IndexOf('\n');
             return index == -1 ? str : str.Substring(0, index);
         }
 
-        public static string Replace(this string str, IEnumerable<KeyValuePair<string, string>> replaces) =>
+        public static string Replace([NotNull] this string str, [NotNull] IEnumerable<KeyValuePair<string, string>> replaces) =>
             replaces.Aggregate(str, (current, pair) => current.Replace(pair.Key, pair.Value));
 
-        public static StringBuilder AppendIfEmpty(this StringBuilder stringBuilder, object value)
+        public static StringBuilder AppendIfEmpty([NotNull] this StringBuilder stringBuilder, [CanBeNull] object value)
         {
             if (stringBuilder.Length == 0) stringBuilder.Append(value);
             return stringBuilder;
         }
 
-        public static decimal LevenshteinDistancePercent(string str1, string str2) => 
+        public static string EncodeBase64([CanBeNull] this string source, [CanBeNull] Encoding encoding = null)
+            => source == null ? null : Convert.ToBase64String((encoding ?? Encoding.Default).GetBytes(source));
+
+        public static string DecodeBase64([CanBeNull] this string encoded, [CanBeNull] Encoding encoding = null)
+            => encoded == null ? null : (encoding ?? Encoding.Default).GetString(Convert.FromBase64String(encoded));
+
+        public static decimal LevenshteinDistancePercent([NotNull] string str1, [NotNull] string str2) => 
             1 - (decimal)LevenshteinDistance(str1, str2) / Math.Max(str1.Length, str2.Length);
 
-        public static int LevenshteinDistance(string str1, string str2)
+        public static int LevenshteinDistance([NotNull] string str1, [NotNull] string str2)
         {
             var n = str1.Length;
             var m = str2.Length;

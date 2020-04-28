@@ -99,20 +99,22 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations">
+      <Version>2019.1.3</Version>
+    </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>12.0.3</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MarukoLib.Lang\MarukoLib.Lang.csproj">
-      <Project>{cdc6516e-2114-4e81-8ba0-9d3e93f8da15}</Project>
+      <Project>{CDC6516E-2114-4E81-8BA0-9D3E93F8DA15}</Project>
       <Name>MarukoLib.Lang</Name>
     </ProjectReference>
     <ProjectReference Include="..\MarukoLib.Logging\MarukoLib.Logging.csproj">
-      <Project>{36b35a27-9e3c-4a7b-870b-9df3b1fe534b}</Project>
+      <Project>{36B35A27-9E3C-4A7B-870B-9DF3B1FE534B}</Project>
       <Name>MarukoLib.Logging</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

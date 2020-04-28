@@ -9,7 +9,7 @@ namespace MarukoLib.Lang
     public interface IRegistrable
     {
 
-        [NotNull] string Identifier { get; }
+        [NotNull] string Id { get; }
 
     }
 
@@ -28,7 +28,7 @@ namespace MarukoLib.Lang
         /// Look up registrable by ID.
         /// </summary>
         /// <returns>true if specific registrable is found, and value will be non-null.</returns>
-        bool LookUp([CanBeNull] string id, [CanBeNull] out IRegistrable registrable);
+        bool LookUp([CanBeNull] string id, out IRegistrable registrable);
 
     }
 
@@ -45,7 +45,7 @@ namespace MarukoLib.Lang
         /// Look up registrable by ID.
         /// </summary>
         /// <returns>true if specific registrable is found, and value will be non-null.</returns>
-        bool LookUp([CanBeNull] string id, [NotNull] out T registrable);
+        bool LookUp([CanBeNull] string id, out T registrable);
 
     }
 
@@ -74,7 +74,7 @@ namespace MarukoLib.Lang
         public void Register(IRegistrable registrable)
         {
             CheckType(registrable);
-            var id = registrable.Identifier;
+            var id = registrable.Id;
             lock (_registered)
                 if (_registered.ContainsKey(id))
                     throw new ArgumentException($"identifier already used: {id}");
@@ -85,7 +85,7 @@ namespace MarukoLib.Lang
         public void Unregister(IRegistrable registrable)
         {
             CheckType(registrable);
-            var id = registrable.Identifier;
+            var id = registrable.Id;
             lock (_registered)
                 if (!_registered.ContainsKey(id) || !ReferenceEquals(_registered[id], registrable))
                     throw new ArgumentException($"unregistered: {id}");
@@ -134,22 +134,22 @@ namespace MarukoLib.Lang
             {
                 var dict = new Dictionary<string, IRegistrable>();
                 foreach (var registrable in Parent.Registered)
-                    dict[registrable.Identifier] = registrable;
+                    dict[registrable.Id] = registrable;
                 foreach (var registrable in Registry.Registered)
-                    dict[registrable.Identifier] = registrable;
+                    dict[registrable.Id] = registrable;
                 return dict.Values.ToArray();
             }
         }
 
         public void Register(IRegistrable registrable)
         {
-            if (Parent.LookUp(registrable.Identifier, out _)) throw new AccessViolationException();
+            if (Parent.LookUp(registrable.Id, out _)) throw new AccessViolationException();
             Registry.Register(registrable);
         }
 
         public void Unregister(IRegistrable registrable)
         {
-            if (Parent.LookUp(registrable.Identifier, out _)) throw new AccessViolationException();
+            if (Parent.LookUp(registrable.Id, out _)) throw new AccessViolationException();
             Registry.Unregister(registrable);
         }
 
@@ -202,25 +202,50 @@ namespace MarukoLib.Lang
 
     }
 
-    public sealed class Registries
+    public class Registries
     {
 
         private readonly IDictionary<Type, IRegistry> _registered = new Dictionary<Type, IRegistry>();
 
-        public IRegistry<T> Registry<T>() where T : IRegistrable => new Registry<T>(Registry(typeof(T)));
+        public T[] GetRegistered<T>() where T : IRegistrable => GetRegistry<T>().Registered;
 
-        public IRegistry Registry(Type type)
+        public IRegistrable[] GetRegistered(Type type) => GetRegistry(type).Registered;
+
+        public IRegistry<T> GetRegistry<T>() where T : IRegistrable => new Registry<T>(GetRegistry(typeof(T)));
+
+        public IRegistry GetRegistry(Type type)
         {
             if (!typeof(IRegistrable).IsAssignableFrom(type))
                 throw new ArgumentException($"target type is not assignable from {typeof(IRegistrable)}");
             IRegistry registry;
             lock (_registered)
-                if (_registered.ContainsKey(type))
-                    registry = _registered[type];
-                else
+                if (!_registered.TryGetValue(type, out registry))
                     registry = _registered[type] = new Registry(type);
             return registry;
         }
+
+        public void SetupRegistry([NotNull] IRegistry registry, bool move = true)
+        {
+            var type = registry.TargetType;
+            lock (_registered)
+            {
+                if (move && _registered.TryGetValue(type, out var existed))
+                {
+                    var array = existed.Registered;
+                    existed.UnregisterAll(array);
+                    registry.RegisterAll(array);
+                }
+                _registered[type] = registry;
+            }
+        }
+
+        public void Register<T>(T value) where T : IRegistrable => GetRegistry(typeof(T)).Register(value);
+
+        public void Unregister<T>(T value) where T : IRegistrable => GetRegistry(typeof(T)).Unregister(value);
+
+        public void RegisterAll<T>(IEnumerable<T> values) where T : IRegistrable => GetRegistry(typeof(T)).RegisterAll(values);
+
+        public void UnregisterAll<T>(IEnumerable<T> values) where T : IRegistrable => GetRegistry(typeof(T)).UnregisterAll(values);
 
     }
 

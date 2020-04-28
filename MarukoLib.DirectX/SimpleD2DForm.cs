@@ -54,6 +54,10 @@ namespace MarukoLib.DirectX
 
         protected abstract void Draw(D2D1.RenderTarget renderTarget);
 
+        protected virtual void BeforeDraw(D2D1.RenderTarget renderTarget) { }
+
+        protected virtual void AfterDraw(D2D1.RenderTarget renderTarget) { }
+
         protected virtual void InitializeDirectXResources()
         {
             var clientSize = ClientSize;
@@ -104,9 +108,11 @@ namespace MarukoLib.DirectX
         protected void OnRender()
         {
             if (RenderTarget?.IsDisposed ?? true) return;
+            BeforeDraw(RenderTarget);
             RenderTarget.BeginDraw();
             Draw(RenderTarget);
             RenderTarget.EndDraw();
+            AfterDraw(RenderTarget);
         }
 
         private void Window_OnLoaded(object sender, EventArgs e) => InitializeDirectXResources();

@@ -94,6 +94,8 @@ namespace MarukoLib.Lang.Collections
             }
         }
 
+        public bool IsFull => Count == Capacity;
+
         public bool IsReadOnly => false;
 
         public void Add(T val)
@@ -102,6 +104,14 @@ namespace MarukoLib.Lang.Collections
             _head = (_head + 1) % Capacity;
             if (_head == _tail)
                 _tail = (_head + 1) % Capacity;
+        }
+
+        public bool Push(T val, out T pop)
+        {
+            var flag = IsFull;
+            pop = flag ? _array[_head] : default;
+            Add(val);
+            return flag;
         }
 
         public T RemoveTail()

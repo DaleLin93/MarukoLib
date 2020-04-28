@@ -11,7 +11,7 @@ namespace MarukoLib.Lang
 
         public static T Default<T>() => (T)Default(typeof(T));
 
-        public static object Default(Type type) => type.IsClass ? null : Activator.CreateInstance(type);
+        public static object Default(Type type) => type.IsValueType ? Activator.CreateInstance(type) : null;
 
         public static object InitClassOrStruct(this Type type) => Activator.CreateInstance(type);
 
@@ -42,6 +42,12 @@ namespace MarukoLib.Lang
 
         public static TSubclass CastOrConvertToSubType<TFrom, TSubclass>(this TFrom input, Func<TFrom, TSubclass> convertFunc) 
             where TSubclass : TFrom => input is TSubclass tout ? tout : convertFunc(input);
+
+        public static bool IsNumberType([NotNull] this Type type)
+        {
+            if (!type.IsPrimitive) return typeof(decimal) == type;
+            return type != typeof(char) && type != typeof(bool);
+        }
 
         public static bool IsNullableType([NotNull] this Type type) => Nullable.GetUnderlyingType(type) != null;
 

@@ -15,6 +15,8 @@ namespace MarukoLib.Lang
 
         [NotNull] Type ValueType { get; }
 
+        bool IsNullable { get; }
+
     }
 
     public interface IReadonlyContext
@@ -46,36 +48,52 @@ namespace MarukoLib.Lang
 
         public static bool operator !=(ContextProperty<T> left, ContextProperty<T> right) => !Equals(left, right);
 
-        public ContextProperty() { }
+        [CanBeNull] private readonly IContainer<T> _defaultValue;
 
-        public ContextProperty(T defaultValue)
+        public ContextProperty() : this(null) { }
+
+        public ContextProperty(T defaultValue) : this(new Immutable<T>(defaultValue), false) { } 
+
+        public ContextProperty([CanBeNull] IContainer<T> defaultValue, bool nullable = false)
         {
-            HasDefaultValue = true;
-            DefaultValue = defaultValue;
+            if (!nullable && defaultValue != null && defaultValue.Value == null)
+                throw new ArgumentException("Default value cannot be null");
+            _defaultValue = defaultValue?.ToImmutable();
+            IsNullable = nullable;
         }
+
+        public static ContextProperty<T> NotNull() => new ContextProperty<T>(null, false);
+
+        public static ContextProperty<T> NotNull(T defaultValue) => new ContextProperty<T>(new Immutable<T>(defaultValue), false);
+
+        public static ContextProperty<T> Nullable() => new ContextProperty<T>(null, true);
+
+        public static ContextProperty<T> Nullable(T defaultValue) => new ContextProperty<T>(new Immutable<T>(defaultValue), true);
 
         public Type ValueType => typeof(T);
 
-        public virtual bool HasDefaultValue { get; }
+        public virtual bool IsNullable { get; }
 
-        public virtual T DefaultValue { get; }
+        public virtual bool HasDefaultValue => _defaultValue != null;
+
+        public virtual T DefaultValue => (_defaultValue ?? throw new Exception("Missing default value")).Value;
 
         /// <summary>
         /// Try get value that contained in given context.
         /// </summary>
         public bool TryGet([NotNull] IReadonlyContext context, out T result)
         {
-            if (!context.TryGet(this, out var resultObj))
+            if (context.TryGet(this, out var resultObj) && resultObj is T t)
             {
-                result = default;
-                return false;
+                result = t;
+                return true;
             }
-            result = (T)resultObj;
-            return true;
+            result = default;
+            return false;
         }
 
         /// <summary>
-        /// Get value that contained in given context or use default value of this property.
+        /// Get the value that contained in given context or use default value of this property.
         /// </summary>
         /// <exception cref="KeyNotFoundException">This property is not existed in given context, and not available default value for this property.</exception>
         public T Get([NotNull] IReadonlyContext context)
@@ -85,7 +103,11 @@ namespace MarukoLib.Lang
             return (T)result;
         }
 
-        public T GetOrDefault([NotNull] IReadonlyContext context, T defaultValue = default) =>
+        /// <summary>
+        /// Get the value that contained in given context of this property or return the given default value.
+        /// </summary>
+        /// <exception cref="KeyNotFoundException">This property is not existed in given context, and not available default value for this property.</exception>
+        public T Get([NotNull] IReadonlyContext context, T defaultValue) =>
             TryGet(context, out var result) ? result : defaultValue;
 
         public void Set([NotNull] IContext context, T value) => context.Set(this, value);
@@ -99,21 +121,22 @@ namespace MarukoLib.Lang
 
     }
 
-    public class ContextProperty : ContextProperty<object>
-    {
-
-        public ContextProperty() { }
-
-        public ContextProperty(object defaultValue) : base(defaultValue) { }
-
-    }
-
     public class NamedProperty<T> : ContextProperty<T>
     {
 
-        public NamedProperty(string name) => Name = name ?? throw new ArgumentNullException(nameof(name));
+        public NamedProperty(string name) : this(name, null) { }
 
-        public NamedProperty(string name, T defaultValue) : base(defaultValue) => Name = name ?? throw new ArgumentNullException(nameof(name));
+        public NamedProperty(string name, T defaultValue) : this(name, new Immutable<T>(defaultValue)) { }
+
+        public NamedProperty(string name, IContainer<T> defaultValue, bool nullable = false) : base(defaultValue, nullable) => Name = name ?? throw new ArgumentNullException(nameof(name));
+
+        public static NamedProperty<T> NotNull(string name) => new NamedProperty<T>(name, null, false);
+
+        public static NamedProperty<T> NotNull(string name, T defaultValue) => new NamedProperty<T>(name, new Immutable<T>(defaultValue), false);
+
+        public static NamedProperty<T> Nullable(string name) => new NamedProperty<T>(name, null, true);
+
+        public static NamedProperty<T> Nullable(string name, T defaultValue) => new NamedProperty<T>(name, new Immutable<T>(defaultValue), true);
 
         public string Name { get; }
 
@@ -152,28 +175,55 @@ namespace MarukoLib.Lang
     public sealed class ReadonlyContext : AbstractReadonlyContext
     {
 
-        private readonly IDictionary<IContextProperty, object> _dict;
+        private readonly IReadOnlyDictionary<IContextProperty, object> _dict;
 
-        public ReadonlyContext([NotNull] IReadonlyContext context) : this(context.ToDictionary(), false) { }
+        public ReadonlyContext([NotNull] IReadonlyContext context, [CanBeNull] IEnumerable<IContextProperty> properties = null)
+            : this(context.ToDictionary(), properties) { }
 
-        public ReadonlyContext([NotNull] IDictionary<IContextProperty, object> dictionary) : this(dictionary, true) { }
+        public ReadonlyContext([NotNull] IReadOnlyDictionary<IContextProperty, object> dictionary, [CanBeNull] IEnumerable<IContextProperty> properties = null)
+            : this(dictionary.OfKeys(properties), false) { }
 
-        internal ReadonlyContext([NotNull] IDictionary<IContextProperty, object> dictionary, bool copy)
+        internal ReadonlyContext([NotNull] IReadOnlyDictionary<IContextProperty, object> dictionary, bool copy)
         {
             if (dictionary == null) throw new ArgumentNullException(nameof(dictionary));
-            _dict = copy ? new Dictionary<IContextProperty, object>(dictionary) : dictionary;
+            _dict = copy ? dictionary.Copy() : dictionary;
         }
 
-        public override IReadOnlyCollection<IContextProperty> Properties => _dict.Keys.AsReadonly();
+        public override IReadOnlyCollection<IContextProperty> Properties => _dict.Keys.AsReadonlyCollection(_dict.Count);
 
         public override bool TryGet(IContextProperty property, out object result)
         {
             if (_dict.ContainsKey(property))
             {
                 result = _dict[property];
-                return property.ValueType.IsInstanceOfTypeOrNull(result);
+                return property.IsValidValue(result);
             }
             result = default;
+            return false;
+        }
+
+    }
+
+    public sealed class CompositeReadonlyContext : AbstractReadonlyContext
+    {
+
+        [NotNull] private readonly IReadOnlyCollection<IReadonlyContext> _contexts;
+
+        public CompositeReadonlyContext([NotNull] params IReadonlyContext[] contexts) 
+            : this((IReadOnlyCollection<IReadonlyContext>)contexts) { }
+
+        public CompositeReadonlyContext([NotNull] IReadOnlyCollection<IReadonlyContext> contexts)
+            => _contexts = contexts ?? throw new ArgumentNullException(nameof(contexts));
+
+        public override IReadOnlyCollection<IContextProperty> Properties 
+            => _contexts.SelectMany(ctx => ctx.Properties).Distinct().ToLinkedList().AsReadonly();
+
+        public override bool TryGet(IContextProperty property, out object result)
+        {
+            foreach (var context in _contexts)
+                if (context.TryGet(property, out result))
+                    return true;
+            result = null;
             return false;
         }
 
@@ -221,8 +271,8 @@ namespace MarukoLib.Lang
         {
             var dict = new Dictionary<IContextProperty, object>();
             foreach (DictionaryEntry entry in dictionary)
-                if (entry.Key is IContextProperty contextProperty && contextProperty.ValueType.IsInstanceOfTypeOrNull(entry.Value))
-                    dict[contextProperty] = entry.Value;
+                if (entry.Key is IContextProperty property && property.IsValidValue(entry.Value))
+                    dict[property] = entry.Value;
             return new Context(dict, false);
         }
 
@@ -230,8 +280,8 @@ namespace MarukoLib.Lang
         {
             var dict = new Dictionary<IContextProperty, object>();
             foreach (var entry in dictionary)
-                if (entry.Key is IContextProperty contextProperty && contextProperty.ValueType.IsInstanceOfTypeOrNull(entry.Value))
-                    dict[contextProperty] = entry.Value;
+                if (entry.Key is IContextProperty property && property.IsValidValue(entry.Value))
+                    dict[property] = entry.Value;
             return new Context(dict, false);
         }
 
@@ -242,7 +292,7 @@ namespace MarukoLib.Lang
             if (_dict.ContainsKey(property))
             {
                 result = _dict[property];
-                return property.ValueType.IsInstanceOfTypeOrNull(result);
+                return property.IsValidValue(result);
             }
             result = default;
             return false;
@@ -250,8 +300,8 @@ namespace MarukoLib.Lang
 
         public override void Set(IContextProperty property, object value)
         {
-            if (!property.ValueType.IsInstanceOfTypeOrNull(value))
-                throw new ArgumentException($"Value type mismatched, expected type: {property.ValueType}, type of given value: {value?.GetType()}");
+            if (!property.IsValidValue(value))
+                throw new ArgumentException($"Value type mismatched, expected type: {property.ValueType}, type of given value: {value?.GetType().ToString() ?? "NULL"}");
             _dict[property] = value;
         }
 
@@ -506,12 +556,12 @@ namespace MarukoLib.Lang
 
         public void Commit(Transaction transaction)
         {
-            if (transaction.Context != this) throw new ArgumentException();
+            if (transaction.Context != this) throw new ArgumentException(nameof(transaction));
             lock (_lock)
             {
                 lock (transaction.Lock)
                 {
-                    if (transaction.IsCompleted) throw new StateException();
+                    if (transaction.IsCompleted) throw new InvalidOperationException();
                     transaction.IsCommitted = true;
                     transaction.IsCompleted = true;
                 }
@@ -521,12 +571,12 @@ namespace MarukoLib.Lang
 
         public void Rollback(Transaction transaction)
         {
-            if (transaction.Context != this) throw new ArgumentException();
+            if (transaction.Context != this) throw new ArgumentException(nameof(transaction));
             lock (_lock)
             {
                 lock (transaction.Lock)
                 {
-                    if (transaction.IsCompleted) throw new StateException();
+                    if (transaction.IsCompleted) throw new InvalidOperationException();
                     transaction.IsCompleted = true;
                 }
                 Refresh();
@@ -552,23 +602,23 @@ namespace MarukoLib.Lang
             return false;
         }
 
-        public void Set(Transaction transaction, IContextProperty property, object value)
+        public void Set([NotNull] Transaction transaction, [NotNull] IContextProperty property, [CanBeNull] object value)
         {
-            if (transaction.Context != this) throw new ArgumentException();
-            if (!property.ValueType.IsInstanceOfType(value)) throw new ArgumentException();
+            if (transaction.Context != this) throw new ArgumentException(nameof(transaction));
+            if (!property.IsValidValue(value)) throw new ArgumentException(nameof(value));
             lock (_lock)
             lock (transaction.Lock)
             {
-                if (transaction.IsCompleted) throw new StateException();
+                if (transaction.IsCompleted) throw new InvalidOperationException();
                 _onTheFlyChanges.AddLast(new Tuple<Transaction, IContextProperty, object>(transaction, property, value));
                 _dictOnTheFly[property] = value;
             }
         }
 
-        public void Remove(Transaction transaction, IContextProperty property)
+        public void Remove([NotNull] Transaction transaction, [NotNull] IContextProperty property)
         {
-            if (transaction.Context != this) throw new ArgumentException();
-            if (transaction.IsCompleted) throw new StateException();
+            if (transaction.Context != this) throw new ArgumentException(nameof(transaction));
+            if (transaction.IsCompleted) throw new InvalidOperationException();
             lock (_lock)
             {
                 lock (transaction.Lock)
@@ -645,40 +695,14 @@ namespace MarukoLib.Lang
 
     }
 
-    public sealed class ContextBuilder
-    {
-
-        private readonly IDictionary<IContextProperty, object> _dict;
-
-        public ContextBuilder() : this(16) { }
-
-        public ContextBuilder(int initialCapacity) => _dict = new Dictionary<IContextProperty, object>(initialCapacity);
-
-        public ContextBuilder(IReadonlyContext context) => _dict = context.ToDictionary();
-
-        public ContextBuilder(IDictionary<IContextProperty, object> dict) => _dict = 
-            new Dictionary<IContextProperty, object>(dict ?? throw new ArgumentNullException(nameof(dict)));
-
-        public ContextBuilder SetRawProperty(IContextProperty property, object value)
-        {
-            if (!property.ValueType.IsInstanceOfTypeOrNull(value))
-                throw new ArgumentException("value type mismatched");
-            _dict[property] = value;
-            return this;
-        }
-
-        public ContextBuilder SetProperty<TP>(ContextProperty<TP> property, TP value) => SetRawProperty(property, value);
-
-        public IContext Build() => new Context(_dict);
-
-        public IReadonlyContext BuildReadonly() => new ReadonlyContext(_dict, false);
-
-    }
-
     public static class ContextExt
     {
 
-        public static T GetOrDefault<T>(this IReadonlyContext context, IContextProperty property, T defaultVal = default) => context.TryGet(property, out var obj) && obj is T t ? t : defaultVal;
+        public static bool IsValidValue(this IContextProperty property, object value)
+            => value == null ? property.IsNullable : property.ValueType.IsInstanceOfType(value);
+
+        public static T GetOrDefault<T>(this IReadonlyContext context, IContextProperty property, T defaultVal = default)
+            => context.TryGet(property, out var obj) && obj is T t ? t : defaultVal;
 
         public static bool Contains(this IReadonlyContext context, IContextProperty property) => context.TryGet(property, out _);
 
@@ -686,10 +710,10 @@ namespace MarukoLib.Lang
         {
             foreach (var property in source.Properties)
                 if (source.TryGet(property, out var value))
-                    destination.Set(property, value); 
+                    destination.Set(property, value);
         }
 
-        public static IDictionary<IContextProperty, object> ToDictionary(this IReadonlyContext context)
+        public static Dictionary<IContextProperty, object> ToDictionary(this IReadonlyContext context)
         {
             var dict = new Dictionary<IContextProperty, object>();
             foreach (var property in context.Properties)
@@ -703,12 +727,96 @@ namespace MarukoLib.Lang
             foreach (var entry in context.ToDictionary())
                 self.Set(entry.Key, entry.Value);
         }
-        
+
         public static void Clear(this IContext context)
         {
             foreach (var property in context.Properties)
                 context.Delete(property);
         }
+
+    }
+
+    public interface IContextBuilder
+    {
+
+        int Count { get; }
+
+        bool TryGet([NotNull] IContextProperty property, out object value);
+
+        [NotNull] IContextBuilder Set([NotNull] IContextProperty property, [CanBeNull] object value);
+
+        [NotNull] IContextBuilder Delete([NotNull] IContextProperty property);
+
+        [NotNull] IContextBuilder Clear();
+
+        [NotNull] IContext Build();
+
+    }
+
+    public sealed class ContextBuilder : IContextBuilder
+    {
+
+        private readonly Dictionary<IContextProperty, object> _dict;
+
+        public ContextBuilder() : this(16) { }
+
+        public ContextBuilder(int initialCapacity) => _dict = new Dictionary<IContextProperty, object>(initialCapacity);
+
+        public ContextBuilder([NotNull] IReadonlyContext context)
+        {
+            _dict = new Dictionary<IContextProperty, object>();
+            this.SetProperties(context);
+        }
+
+        public int Count => _dict.Count;
+
+        public bool TryGet(IContextProperty property, out object value) => _dict.TryGetValue(property, out value);
+
+        public IContextBuilder Set(IContextProperty property, object value)
+        {
+            if (!property.IsValidValue(value)) throw new ArgumentException("The given value is invalid");
+            _dict[property] = value;
+            return this;
+        }
+
+        public IContextBuilder Delete(IContextProperty property)
+        {
+            _dict.Remove(property);
+            return this;
+        }
+
+        public IContextBuilder Clear()
+        {
+            _dict.Clear();
+            return this;
+        }
+
+        public IContext Build() => new Context(_dict);
+
+    }
+
+    public static class ContextBuilderExt
+    {
+
+        public static IContextBuilder SetProperties([NotNull] this IContextBuilder builder, [NotNull] IReadonlyContext context)
+        {
+            foreach (var property in context.Properties)
+                if (context.TryGet(property, out var val))
+                    builder.Set(property, val);
+            return builder;
+        }
+
+        public static IContextBuilder SetPropertyNotNull([NotNull] this IContextBuilder builder, [NotNull] IContextProperty property, [CanBeNull] object value)
+        {
+            if (value != null) builder.Set(property, value);
+            return builder;
+        }
+
+        public static IContextBuilder SetTypedProperty<TP>([NotNull] this IContextBuilder builder, [NotNull] ContextProperty<TP> property, TP value)
+            => builder.Set(property, value);
+
+        public static IReadonlyContext BuildReadonly([NotNull] this IContextBuilder builder) 
+            => builder.Count > 0 ? (IReadonlyContext) builder.Build() : EmptyContext.Instance;
 
     }
 

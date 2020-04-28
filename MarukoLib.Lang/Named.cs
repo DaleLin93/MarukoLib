@@ -11,14 +11,7 @@ namespace MarukoLib.Lang
 
     }
 
-    public interface INamedObject : INamed
-    {
-
-        object Value { get; }
-
-    }
-
-    public class NamedObject : INamedObject
+    public class NamedObject : INamed
     {
 
         public NamedObject(KeyValuePair<string, object> pair) : this(pair.Key, pair.Value) { }
@@ -43,7 +36,7 @@ namespace MarukoLib.Lang
 
         public override int GetHashCode() => Name.GetHashCode();
 
-        public override bool Equals(object obj) => obj is INamedObject that && Equals(that.Name, Name) && Equals(that.Value, Value);
+        public override bool Equals(object obj) => obj is NamedObject that && Equals(that.Name, Name) && Equals(that.Value, Value);
 
         public override string ToString() => Name;
 

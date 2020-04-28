@@ -92,8 +92,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Gdi32.cs" />
-    <Compile Include="InpOutX64.cs" />
-    <Compile Include="InpOut32.cs" />
+    <Compile Include="InpOut.cs" />
     <Compile Include="CoTaskArray.cs" />
     <Compile Include="Kernel32.cs" />
     <Compile Include="MarshalUtils.cs" />

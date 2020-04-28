@@ -33,13 +33,14 @@ namespace MarukoLib.Lang.Sequence
             => SumOfWeight((IReadOnlyCollection<RandomTarget<T>>)targets);
 
         public static decimal SumOfWeight<T>(this IReadOnlyCollection<RandomTarget<T>> targets) 
-            => (from target in targets let rate = Math.Abs(target.Weight) where !(rate <= 0) select target.Weight).Sum();
+            => (from target in targets let rate = Math.Abs(target.Weight) where rate > 0 select rate).Sum();
 
         public static RandomTarget<T>[] Normalize<T>(params RandomTarget<T>[] targets) 
             => Normalize((IReadOnlyCollection<RandomTarget<T>>)targets);
 
         public static RandomTarget<T>[] Normalize<T>(this IReadOnlyCollection<RandomTarget<T>> targets) 
-            => targets.Select(target => new RandomTarget<T>(target.Value, target.Weight / SumOfWeight(targets))).ToArray();
+            => (from target in targets let weight = target.Weight where weight != 0 select target)
+                .ToArray();
 
     }
 
@@ -104,9 +105,12 @@ namespace MarukoLib.Lang.Sequence
 
         public PseduoRandomSequence(int seed, int? roundSize, decimal randomness, params RandomTarget<T>[] targets)
         {
+            if (roundSize != null && roundSize <= 0) throw new ArgumentException($"{nameof(roundSize)} must be positive");
+            if (randomness <= 0) throw new ArgumentException($"{nameof(randomness)} must be positive");
             _r = new Random(seed);
             var normalizedTargets = targets.Normalize();
-            var minRate = normalizedTargets.Length == 0 ? 0 : normalizedTargets.Min(target => Math.Abs(target.Weight));
+            if (normalizedTargets.IsEmpty()) throw new ArgumentException($"No valid {targets}");
+            var minRate = normalizedTargets.Min(target => Math.Abs(target.Weight));
             var actualRoundSize = roundSize ?? 1 / minRate;
             TargetCount = normalizedTargets.Length;
             _targetValues = new T[TargetCount];
@@ -117,6 +121,7 @@ namespace MarukoLib.Lang.Sequence
                 var target = normalizedTargets[i];
                 _targetValues[i] = target.Value;
                 _targetRoundCounts[i] = Math.Abs(target.Weight) * actualRoundSize * randomness;
+                System.Diagnostics.Debug.Assert(_targetRoundCounts[i] > 0);
             }
         }
 
